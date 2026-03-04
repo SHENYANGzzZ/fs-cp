@@ -12,6 +12,7 @@ import { browserConfig, crawlConfig } from "../config";
 export class BrowserManager {
   private browser: Browser | null = null;
   private page: Page | null = null;
+  private initialBackToTopButtonState: boolean = false;
 
   /**
    * 启动浏览器
@@ -114,9 +115,19 @@ export class BrowserManager {
     }
 
     console.log("等待页面完全加载...");
+    
+    // 等待文档状态变为complete
     await this.page.waitForFunction(() => document.readyState === "complete", {
       timeout: crawlConfig.pageLoadTimeout,
     });
+    console.log("文档状态已变为complete");
+    
+    // 等待网络请求完成
+    await this.page.waitForNetworkIdle({ timeout: crawlConfig.pageLoadTimeout });
+    console.log("网络请求已完成");
+    
+    // 再等待一段时间，确保所有动态内容都已加载
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     console.log("页面已完全加载");
   }
 
@@ -183,17 +194,17 @@ export class BrowserManager {
 
     return await this.page.evaluate(() => {
       // 检查页面是否有滚动空间
-      const hasScrollSpace =
-        document.body.scrollHeight > window.innerHeight + 100;
+      const hasScrollSpace = document.body.scrollHeight > window.innerHeight + 100;
       // 检查当前是否已经滚动到了底部
-      const isAtBottom =
-        window.scrollY >= document.body.scrollHeight - window.innerHeight - 50;
+      const isAtBottom = window.scrollY >= document.body.scrollHeight - window.innerHeight - 50;
 
       console.log(
         `滚动检测: 总高度=${document.body.scrollHeight}, 视口高度=${window.innerHeight}, 当前滚动位置=${window.scrollY}, 有滚动空间=${hasScrollSpace}, 已到底部=${isAtBottom}`
       );
 
-      return hasScrollSpace && !isAtBottom;
+      // 即使没有滚动空间，也返回true，确保至少尝试滚动一次
+      // 这样可以触发飞书文档的内容加载机制
+      return true;
     });
   }
 
@@ -211,160 +222,152 @@ export class BrowserManager {
   }
 
   /**
-   * 自适应滚动，根据内容加载情况动态调整
+   * 初始化回到顶部按钮的初始状态
+   */
+  async initBackToTopButtonState(): Promise<void> {
+    if (!this.page) {
+      throw new Error("页面未初始化");
+    }
+    
+    console.log("初始化回到顶部按钮状态...");
+    this.initialBackToTopButtonState = await this.hasBackToTopButton();
+    console.log(`回到顶部按钮初始状态: ${this.initialBackToTopButtonState}`);
+  }
+
+  /**
+   * 检测回到顶部按钮从隐藏到显示的变化
+   * @returns 是否检测到按钮从隐藏到显示的变化
+   */
+  async detectBackToTopButtonVisibilityChange(): Promise<boolean> {
+    if (!this.page) {
+      throw new Error("页面未初始化");
+    }
+    
+    console.log("检测回到顶部按钮可见性变化...");
+    const currentState = await this.hasBackToTopButton();
+    console.log(`回到顶部按钮当前状态: ${currentState}, 初始状态: ${this.initialBackToTopButtonState}`);
+    
+    // 检查是否从隐藏变为显示
+    return !this.initialBackToTopButtonState && currentState;
+  }
+
+  /**
+   * 智能滚动，确保能加载完整内容
    */
   async adaptiveScroll(): Promise<void> {
     if (!this.page) {
       throw new Error("页面未初始化");
     }
 
-    console.log("开始自适应滚动...");
+    console.log("开始智能滚动加载内容...");
 
-    // 注入进度指示器
-    await this.injectProgressIndicator();
-    await this.updateProgress(0, "准备中...");
-
-    // 首先等待页面完全加载
-    await this.updateProgress(10, "等待页面加载...");
+    // 等待页面完全加载
     await this.waitForPageLoad();
-
-    // 滚动到页面顶部，确保从开始位置加载
-    console.log("滚动到页面顶部...");
-    await this.updateProgress(20, "滚动到页面顶部...");
+    
+    // 初始化回到顶部按钮的初始状态
+    await this.initBackToTopButtonState();
+    
+    // 滚动到页面顶部
     await this.page.evaluate(() => {
-      window.scrollTo(0, 0);
-      // 触发滚动事件
-      const event = new Event("scroll", { bubbles: true });
-      window.dispatchEvent(event);
+      // 尝试滚动飞书文档的实际滚动容器
+      const scrollContainers = [
+        '.page-main-item.editor',
+        '.doc-content',
+        '.editor-container',
+        '.lark-editor-content',
+        document.documentElement,
+        document.body
+      ];
+      
+      for (const container of scrollContainers) {
+        let element;
+        if (typeof container === 'string') {
+          element = document.querySelector(container);
+        } else {
+          element = container;
+        }
+        
+        if (element && element.scrollTop !== undefined) {
+          element.scrollTop = 0;
+          break;
+        }
+      }
     });
-
-    // 等待一小段时间，确保页面稳定
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // 展开折叠内容
-    await this.updateProgress(30, "展开折叠内容...");
-    const initialExpanded = await this.expandContent();
-    await this.showNotification(
-      "爬虫进度",
-      `已展开 ${initialExpanded} 个折叠内容`
-    );
-
-    // 等待展开内容加载
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
+    
     let scrollCount = 0;
-    const maxScrolls = 50; // 减少最大滚动次数
-    let hasMoreContent = true;
-    let previousHeight = 0;
-
-    console.log("开始动态滚动...");
-
-    // 循环滚动，直到无法再滚动或达到最大滚动次数
-    while (hasMoreContent && scrollCount < maxScrolls) {
-      // 获取当前页面高度
-      const currentHeight = await this.page.evaluate(
-        () => document.body.scrollHeight
-      );
-
-      // 检查页面高度是否变化
-      if (currentHeight === previousHeight && scrollCount > 0) {
-        console.log("页面高度未变化，可能已加载完成");
-        break;
-      }
-
-      // 检查是否可以滚动
-      hasMoreContent = await this.canScroll();
-      if (!hasMoreContent) {
-        console.log("已滚动到页面底部，停止滚动");
-        break;
-      }
-
-      // 计算滚动位置（每次滚动到当前高度的90%）
-      const scrollPosition = currentHeight * 0.9;
-      console.log(
-        `滚动次数: ${scrollCount}, 页面高度: ${currentHeight}, 滚动到: ${scrollPosition}`
-      );
-
-      // 计算进度
-      const progress = Math.min(30 + (scrollCount / maxScrolls) * 50, 80);
-      await this.updateProgress(
-        progress,
-        `滚动中 (${scrollCount}/${maxScrolls})...`
-      );
-
-      // 使用直接滚动替代平滑滚动，并触发滚动事件
-      await this.page.evaluate((position) => {
-        window.scrollTo(0, position);
-        // 触发滚动事件，确保内容加载
-        const event = new Event("scroll", { bubbles: true });
-        window.dispatchEvent(event);
-        // 触发鼠标移动事件，模拟用户交互
-        const mouseEvent = new MouseEvent("mousemove", {
-          bubbles: true,
-          clientX: 100,
-          clientY: 100,
-        });
-        document.dispatchEvent(mouseEvent);
-      }, scrollPosition);
-
-      // 等待内容加载（动态等待时间，根据页面大小调整）
-      const waitTime = Math.min(3000 + (currentHeight / 1000) * 1000, 7000);
-      console.log(`等待 ${waitTime}ms 内容加载...`);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-
+    const maxScrolls = 20;
+    let isContentComplete = false;
+    
+    // 循环滚动，直到内容完全加载或达到最大滚动次数
+    while (scrollCount < maxScrolls) {
+      // 滚动到页面的下一个位置
+      await this.page.evaluate((step) => {
+        // 尝试滚动飞书文档的实际滚动容器
+        const scrollContainers = [
+          '.page-main-item.editor',
+          '.doc-content',
+          '.editor-container',
+          '.lark-editor-content',
+          document.documentElement,
+          document.body
+        ];
+        
+        for (const container of scrollContainers) {
+          let element;
+          if (typeof container === 'string') {
+            element = document.querySelector(container);
+          } else {
+            element = container;
+          }
+          
+          if (element && element.scrollTop !== undefined && element.scrollHeight > 0) {
+            const scrollPosition = (element.scrollHeight / 10) * (step % 10);
+            element.scrollTop = scrollPosition;
+            break;
+          }
+        }
+      }, scrollCount);
+      
+      // 等待内容加载
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // 展开折叠内容
-      await this.updateProgress(progress + 5, "展开折叠内容...");
-      const expandedCount = await this.expandContent();
-
-      if (expandedCount > 0) {
-        await this.showNotification(
-          "爬虫进度",
-          `已展开 ${expandedCount} 个新内容`
-        );
-        // 展开内容后等待更长时间
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      await this.expandContent();
+      
+      // 检测回到顶部按钮是否从隐藏变为显示
+      const hasBackToTopButtonChanged = await this.detectBackToTopButtonVisibilityChange();
+      if (hasBackToTopButtonChanged) {
+        console.log("回到顶部按钮从隐藏变为显示，内容已完全加载，停止滚动");
+        isContentComplete = true;
+        break;
       }
-
-      // 再次滚动到当前位置，确保展开的内容被加载
-      await this.page.evaluate((position) => {
-        window.scrollTo(0, position);
-        // 再次触发滚动事件
-        const event = new Event("scroll", { bubbles: true });
-        window.dispatchEvent(event);
-      }, scrollPosition);
-
-      // 等待展开的内容加载
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // 更新previousHeight
-      previousHeight = currentHeight;
+      
+      // 检查滚动条状态，判断内容是否完整
+      const scrollStatus = await this.getScrollStatus();
+      console.log(`滚动条状态: 高度=${scrollStatus.scrollHeight}, 滚动位置=${scrollStatus.scrollTop}, 视口高度=${scrollStatus.viewportHeight}, 已到底部=${scrollStatus.isAtBottom}, 有滚动条=${scrollStatus.hasScrollbar}`);
+      
+      // 尝试滚动到页面底部，然后再次检查滚动条状态
+      await this.scrollToBottom();
+      const bottomScrollStatus = await this.getScrollStatus();
+      console.log(`底部滚动条状态: 高度=${bottomScrollStatus.scrollHeight}, 滚动位置=${bottomScrollStatus.scrollTop}, 视口高度=${bottomScrollStatus.viewportHeight}, 已到底部=${bottomScrollStatus.isAtBottom}, 有滚动条=${bottomScrollStatus.hasScrollbar}`);
+      
+      // 当滚动到底部时，判断内容是否完整
+      if (bottomScrollStatus.isAtBottom) {
+        console.log("已滚动到底部，内容已完全加载，停止滚动");
+        isContentComplete = true;
+        break;
+      }
+      
       scrollCount++;
+      console.log(`滚动次数: ${scrollCount}`);
     }
-
-    // 滚动到页面底部，确保所有内容加载
-    console.log("滚动到页面底部，确保所有内容加载...");
-    await this.updateProgress(85, "滚动到页面底部...");
-    await this.scrollToBottom();
-
-    // 等待一小段时间，确保内容完全加载
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // 再次展开折叠内容
-    await this.updateProgress(90, "再次展开折叠内容...");
-    await this.expandContent();
-
+    
     // 再次滚动到页面底部，确保所有内容加载
-    console.log("再次滚动到页面底部，确保所有内容加载...");
-    await this.updateProgress(95, "再次滚动到页面底部...");
     await this.scrollToBottom();
-
-    // 等待一小段时间，确保内容完全加载
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    await this.updateProgress(100, "滚动完成");
-    await this.showNotification("爬虫进度", "内容加载完成，开始提取");
-
-    console.log("自适应滚动完成");
+    
+    // 最终检查回到顶部按钮
+    const finalHasBackToTopButton = await this.hasBackToTopButton();
+    console.log(`智能滚动完成，是否出现回到顶部按钮: ${finalHasBackToTopButton}`);
   }
 
   /**
@@ -439,12 +442,54 @@ export class BrowserManager {
 
     console.log("滚动到页面底部...");
     await this.page.evaluate(() => {
-      // 使用更直接的滚动方法，确保页面真正滚动
-      window.scrollTo(0, document.body.scrollHeight);
-      // 触发滚动事件，确保内容加载
-      const event = new Event("scroll", { bubbles: true });
-      window.dispatchEvent(event);
+      // 尝试直接操作飞书文档的滚动容器
+      const feishuContainers = [
+        '.page-main-item.editor',
+        '.doc-content',
+        '.editor-container',
+        '.lark-editor-content'
+      ];
+
+      let scrolled = false;
+      
+      for (const selector of feishuContainers) {
+        const container = document.querySelector(selector);
+        if (container) {
+          console.log(`找到飞书滚动容器: ${selector}`);
+          console.log(`滚动前 - 高度: ${container.scrollHeight}, 滚动位置: ${container.scrollTop}`);
+          
+          // 尝试直接设置scrollTop到最大值
+          container.scrollTop = container.scrollHeight;
+          console.log(`滚动后 - 高度: ${container.scrollHeight}, 滚动位置: ${container.scrollTop}`);
+          
+          // 尝试使用scrollIntoView
+          const lastElement = container.lastElementChild;
+          if (lastElement) {
+            lastElement.scrollIntoView({ behavior: 'auto', block: 'end' });
+            console.log(`使用scrollIntoView滚动到最后一个元素`);
+          }
+          
+          scrolled = true;
+          break;
+        }
+      }
+
+      if (!scrolled) {
+        // 尝试滚动整个页面
+        console.log(`未找到飞书滚动容器，尝试滚动整个页面`);
+        console.log(`滚动前 - 页面高度: ${document.body.scrollHeight}, 滚动位置: ${window.scrollY}`);
+        
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+        console.log(`滚动后 - 页面高度: ${document.body.scrollHeight}, 滚动位置: ${window.scrollY}`);
+      }
+
+      // 触发滚动事件
+      const scrollEvent = new Event('scroll', { bubbles: true });
+      window.dispatchEvent(scrollEvent);
+      console.log("触发滚动事件");
     });
+    // 等待滚动完成
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   /**
@@ -492,293 +537,244 @@ export class BrowserManager {
   }
 
   /**
-   * 注入进度指示器到页面
+   * 检测滚动条状态
+   * @returns 滚动条状态信息
    */
-  async injectProgressIndicator(): Promise<void> {
+  async getScrollStatus(): Promise<{ scrollHeight: number; scrollTop: number; viewportHeight: number; isAtBottom: boolean; container: string; hasScrollbar: boolean }> {
     if (!this.page) {
       throw new Error("页面未初始化");
     }
 
-    await this.page.evaluate(() => {
-      // 创建进度指示器元素
-      const progressIndicator = document.createElement("div");
-      progressIndicator.id = "crawler-progress";
-      progressIndicator.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: #f0f0f0;
-        z-index: 999999;
-      `;
+    return await this.page.evaluate(() => {
+      // 增加更多的滚动容器选择器，确保能捕捉到飞书文档的滚动条
+      const scrollContainers = [
+        '.page-main-item.editor',
+        '.doc-content',
+        '.editor-container',
+        '.lark-editor-content',
+        '.docs-doc-content',
+        '.docs-editor',
+        '.article-content',
+        '.content-area',
+        '.page-content',
+        '.main-content',
+        '.document-content',
+        '.content-container',
+        '.editor-content',
+        '.rich-text-editor',
+        '.prose-content',
+        '.wiki-content',
+        '.lark-wiki-content',
+        '.feishu-wiki-content',
+        'main',
+        'article',
+        document.documentElement,
+        document.body
+      ];
 
-      // 创建进度条
-      const progressBar = document.createElement("div");
-      progressBar.id = "crawler-progress-bar";
-      progressBar.style.cssText = `
-        width: 0%;
-        height: 100%;
-        background: #007AFF;
-        transition: width 0.3s ease;
-      `;
+      let bestContainer = null;
+      let bestContainerName = 'body';
+      let maxScrollHeight = 0;
 
-      progressIndicator.appendChild(progressBar);
-      document.body.appendChild(progressIndicator);
-
-      // 创建状态信息
-      const statusInfo = document.createElement("div");
-      statusInfo.id = "crawler-status";
-      statusInfo.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px 18px;
-        border-radius: 8px;
-        font-size: 13px;
-        z-index: 999999;
-        font-family: Arial, sans-serif;
-        text-align: center;
-        max-width: 70%;
-        backdrop-filter: blur(5px);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s ease;
-      `;
-      statusInfo.textContent = "准备中...";
-      document.body.appendChild(statusInfo);
-
-      // 尝试关闭可能的登录弹窗
-      const closeLoginModal = () => {
-        try {
-          // 飞书特定的登录弹窗关闭按钮选择器
-          const closeButtons = document.querySelectorAll(
-            ".login-modal-close, .modal-close, .close-btn, .btn-close, .ud__modal__close, .lx-modal__header__close"
-          );
-          closeButtons.forEach((button) => {
-            // 检查按钮是否可见且可点击
-            if ((button as HTMLElement).offsetParent !== null) {
-              (button as HTMLElement).click();
-            }
-          });
-
-          // 尝试点击其他可能的关闭区域
-          const loginModals = document.querySelectorAll(
-            ".login-modal, .modal-overlay, .login-dialog, .ud__modal, .lx-modal"
-          );
-          loginModals.forEach((modal) => {
-            // 点击模态框外部关闭
-            const overlay = modal.querySelector(
-              ".modal-overlay, .ud__modal__overlay, .lx-modal__overlay"
-            );
-            if (overlay && (overlay as HTMLElement).offsetParent !== null) {
-              (overlay as HTMLElement).click();
-            }
-          });
-        } catch (e) {
-          console.log("关闭登录弹窗失败:", e);
+      // 找到滚动高度最大的容器
+      for (const container of scrollContainers) {
+        let element;
+        let containerName;
+        if (typeof container === 'string') {
+          element = document.querySelector(container);
+          containerName = container;
+        } else {
+          element = container;
+          containerName = container === document.documentElement ? 'documentElement' : 'body';
         }
+        
+        if (element && element.scrollTop !== undefined && element.scrollHeight > 0) {
+          if (element.scrollHeight > maxScrollHeight) {
+            maxScrollHeight = element.scrollHeight;
+            bestContainer = element;
+            bestContainerName = containerName;
+          }
+        }
+      }
+
+      // 使用找到的最佳容器
+      if (bestContainer) {
+        const scrollHeight = bestContainer.scrollHeight;
+        const scrollTop = bestContainer.scrollTop;
+        const viewportHeight = window.innerHeight || 1080;
+        const isAtBottom = scrollTop >= scrollHeight - viewportHeight - 50;
+        // 检测是否有滚动条
+        const hasScrollbar = scrollHeight > viewportHeight;
+
+        console.log(`滚动容器 ${bestContainerName}: 高度=${scrollHeight}, 滚动位置=${scrollTop}, 视口高度=${viewportHeight}, 已到底部=${isAtBottom}, 有滚动条=${hasScrollbar}`);
+
+        return {
+          scrollHeight,
+          scrollTop,
+          viewportHeight,
+          isAtBottom,
+          container: bestContainerName,
+          hasScrollbar
+        };
+      }
+
+      // 默认返回body的滚动状态
+      const scrollHeight = document.body.scrollHeight;
+      const scrollTop = window.scrollY;
+      const viewportHeight = window.innerHeight || 1080;
+      const isAtBottom = scrollTop >= scrollHeight - viewportHeight - 50;
+      const hasScrollbar = scrollHeight > viewportHeight;
+
+      console.log(`默认滚动容器 body: 高度=${scrollHeight}, 滚动位置=${scrollTop}, 视口高度=${viewportHeight}, 已到底部=${isAtBottom}, 有滚动条=${hasScrollbar}`);
+
+      return {
+        scrollHeight,
+        scrollTop,
+        viewportHeight,
+        isAtBottom,
+        container: 'body',
+        hasScrollbar
       };
-
-      // 立即尝试关闭登录弹窗
-      closeLoginModal();
-
-      // 2秒后再次尝试，确保弹窗完全加载
-      setTimeout(closeLoginModal, 2000);
-
-      // 5秒后再次尝试，以防弹窗延迟出现
-      setTimeout(closeLoginModal, 5000);
-
-      // 添加元素标识样式
-      const style = document.createElement("style");
-      style.textContent = `
-        /* 已识别的内容元素 */
-        .crawler-identified {
-          background-color: rgba(167, 243, 208, 0.2) !important;
-          border: 1px solid #22c55e !important;
-          border-radius: 4px !important;
-          transition: all 0.3s ease !important;
-          box-shadow: 0 1px 3px rgba(34, 197, 94, 0.2) !important;
-        }
-        
-        /* 已提取的标题 */
-        .crawler-heading {
-          background-color: rgba(147, 197, 253, 0.2) !important;
-          border: 1px solid #3b82f6 !important;
-          border-radius: 4px !important;
-          font-weight: bold !important;
-          transition: all 0.3s ease !important;
-          box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2) !important;
-        }
-        
-        /* 未处理的元素 */
-        .crawler-unprocessed {
-          background-color: rgba(254, 243, 199, 0.2) !important;
-          border: 1px dashed #f59e0b !important;
-          border-radius: 4px !important;
-          transition: all 0.3s ease !important;
-        }
-        
-        /* 提取状态标签 */
-        .crawler-status-tag {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          background: #22c55e;
-          color: white;
-          font-size: 10px;
-          padding: 3px 8px;
-          border-radius: 12px;
-          z-index: 9999;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* 排除的元素 - 不标记为已识别 */
-        .login, .login-modal, .login-dialog, .ud__modal, .lx-modal, .login-btn, .register-btn, .auth-form,
-        .btn, .button, .sidebar, .outline, .catalog, .wiki-sidebar, .doc-outline,
-        .header, .footer, .nav, .navigation, .menu, .toolbar, .tool-bar,
-        .share, .comment, .like, .favorite, .bookmark, .action, .actions,
-        .avatar, .user, .profile, .settings, .preferences, .notification, .notifications,
-        .ads, .advertisement, .promotion, .banner, .popup, .modal, .overlay {
-          background-color: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-      `;
-      document.head.appendChild(style);
     });
   }
 
   /**
-   * 标记已识别的内容元素
+   * 检测是否存在回到顶部按钮
+   * @returns 是否存在回到顶部按钮
    */
-  async markIdentifiedElements(): Promise<void> {
+  async hasBackToTopButton(): Promise<boolean> {
     if (!this.page) {
       throw new Error("页面未初始化");
     }
 
-    await this.page.evaluate((config: any) => {
-      // 检查元素是否应该被排除
-      const shouldExcludeElement = (element: Element): boolean => {
-        const excludeClasses = [
-          'login', 'login-modal', 'login-dialog', 'ud__modal', 'lx-modal', 'login-btn', 'register-btn', 'auth-form',
-          'btn', 'button', 'sidebar', 'outline', 'catalog', 'wiki-sidebar', 'doc-outline',
-          'header', 'footer', 'nav', 'navigation', 'menu', 'toolbar', 'tool-bar',
-          'share', 'comment', 'like', 'favorite', 'bookmark', 'action', 'actions',
-          'avatar', 'user', 'profile', 'settings', 'preferences', 'notification', 'notifications',
-          'ads', 'advertisement', 'promotion', 'banner', 'popup', 'modal', 'overlay'
-        ];
-        
-        // 检查元素本身的类
-        for (const cls of excludeClasses) {
-          if (element.classList.contains(cls)) {
-            return true;
+    return await this.page.evaluate(() => {
+      // 飞书文档特有的回到顶部按钮选择器
+      const feishuBackToTopSelectors = [
+        // 基于用户提供的按钮结构
+        'button:has(span.universe-icon)',
+        'button:has(svg[data-icon="SpaceUpOutlined"])',
+        'button:has(svg path[d*="M12.707 2.293a1 1 0 0 0-1.414 0l-7 7a1 1 0 0 0 1.414 1.414L11 5.414V22a1 1 0 1 0 2 0V5.414l5.293 5.293a1 1 0 0 0 1.414-1.414l-7-7Z"])',
+        // 基于用户提供的截图，添加更通用的向上箭头图标检测
+        'button:has(svg[aria-label*="回到顶部"])',
+        'button:has(svg[title*="回到顶部"])',
+        'button[class*="back-to-top"], button[class*="backtop"]'
+      ];
+      
+      // 检测飞书文档特有的回到顶部按钮
+      for (const selector of feishuBackToTopSelectors) {
+        try {
+          const elements = document.querySelectorAll(selector);
+          for (let i = 0; i < elements.length; i++) {
+            const element = elements[i];
+            if (element) {
+              // 检查元素是否可见
+              const style = window.getComputedStyle(element);
+              const isVisible = style.display !== 'none' && 
+                              style.visibility !== 'hidden' && 
+                              style.opacity !== '0' && 
+                              (element as HTMLElement).offsetParent !== null;
+              
+              // 检查元素位置是否在右下角
+              const rect = element.getBoundingClientRect();
+              const isBottomRight = rect.right > window.innerWidth * 0.8 && 
+                                  rect.bottom > window.innerHeight * 0.8;
+              
+              // 检查元素是否为按钮
+              const isButton = element.tagName === 'BUTTON';
+              
+              // 检查按钮是否包含向上箭头图标
+              let hasUpArrow = false;
+              const svgElements = element.querySelectorAll('svg');
+              for (let j = 0; j < svgElements.length; j++) {
+                const svg = svgElements[j];
+                // 检查svg是否包含向上箭头相关的属性或内容
+                if (svg.getAttribute('data-icon') === 'SpaceUpOutlined' ||
+                    svg.getAttribute('aria-label')?.includes('回到顶部') ||
+                    svg.getAttribute('title')?.includes('回到顶部') ||
+                    svg.querySelector('path[d*="M12.707 2.293"]') ||
+                    svg.querySelector('path[d*="M12 2l-8 8h5v10h6V10h5l-8-8z"]') ||
+                    svg.querySelector('path[d*="M18 15l-6-6-6 6"]')) {
+                  hasUpArrow = true;
+                  break;
+                }
+              }
+              
+              // 检查按钮是否有回到顶部相关的文本
+              const buttonText = element.textContent?.toLowerCase() || '';
+              const hasBackToTopText = buttonText.includes('回到顶部') || 
+                                       buttonText.includes('back to top') || 
+                                       buttonText.includes('top') || 
+                                       buttonText.includes('up');
+              
+              // 只有当按钮可见、在右下角、是按钮且包含向上箭头或回到顶部文本时才认为是回到顶部按钮
+              if (isButton && isVisible && isBottomRight && (hasUpArrow || hasBackToTopText)) {
+                console.log(`检测到回到顶部按钮: ${selector}`);
+                return true;
+              }
+            }
           }
+        } catch (e) {
+          // 忽略选择器语法错误
         }
-        
-        // 检查元素是否包含排除类的子元素
-        for (const cls of excludeClasses) {
-          if (element.querySelector('.' + cls)) {
-            return true;
-          }
-        }
-        
-        // 检查元素是否包含登录/注册相关文本
-        const text = element.textContent || '';
-        if (text.includes('登录') || text.includes('注册') || text.includes('Login') || text.includes('Register')) {
-          return true;
-        }
-        
-        return false;
-      };
-
-      // 标记内容容器
-      for (const selector of config.contentContainers) {
-        const containers = document.querySelectorAll(selector);
-        containers.forEach((container: any) => {
-          if (!shouldExcludeElement(container)) {
-            container.classList.add("crawler-identified");
-            // 添加状态标签
-            const tag = document.createElement("div");
-            tag.className = "crawler-status-tag";
-            tag.textContent = "已识别";
-            container.style.position = "relative";
-            container.appendChild(tag);
-          }
-        });
       }
-
-      // 标记标题元素
-      const headings = document.querySelectorAll(config.headingSelectors);
-      headings.forEach((heading: any) => {
-        if (!shouldExcludeElement(heading)) {
-          heading.classList.add("crawler-heading");
-          // 添加状态标签
-          const tag = document.createElement("div");
-          tag.className = "crawler-status-tag";
-          tag.textContent = "标题";
-          heading.style.position = "relative";
-          heading.appendChild(tag);
+      
+      // 检测所有按钮元素，特别关注右下角的圆形按钮
+      const buttons = document.querySelectorAll('button');
+      for (let i = 0; i < buttons.length; i++) {
+        const button = buttons[i];
+        if (button) {
+          // 检查按钮是否可见
+          const style = window.getComputedStyle(button);
+          const isVisible = style.display !== 'none' && 
+                          style.visibility !== 'hidden' && 
+                          style.opacity !== '0' && 
+                          (button as HTMLElement).offsetParent !== null;
+          
+          // 检查按钮位置是否在右下角
+          const rect = button.getBoundingClientRect();
+          const isBottomRight = rect.right > window.innerWidth * 0.8 && 
+                              rect.bottom > window.innerHeight * 0.8;
+          
+          // 检查按钮是否为圆形
+          const isRound = style.borderRadius === '50%' || 
+                         style.borderRadius === '9999px' || 
+                         button.classList.contains('circle') ||
+                         button.classList.contains('round') ||
+                         button.classList.contains('rounded');
+          
+          // 检查按钮是否包含向上箭头
+          let hasUpArrow = false;
+          const svgElements = button.querySelectorAll('svg');
+          for (let j = 0; j < svgElements.length; j++) {
+            const svg = svgElements[j];
+            if (svg.getAttribute('data-icon') === 'SpaceUpOutlined' ||
+                svg.getAttribute('aria-label')?.includes('回到顶部') ||
+                svg.getAttribute('title')?.includes('回到顶部') ||
+                svg.querySelector('path[d*="M12.707 2.293"]') ||
+                svg.querySelector('path[d*="M12 2l-8 8h5v10h6V10h5l-8-8z"]') ||
+                svg.querySelector('path[d*="M18 15l-6-6-6 6"]')) {
+              hasUpArrow = true;
+              break;
+            }
+          }
+          
+          // 检查按钮是否有回到顶部相关的文本
+          const buttonText = button.textContent?.toLowerCase() || '';
+          const hasBackToTopText = buttonText.includes('回到顶部') || 
+                                   buttonText.includes('back to top') || 
+                                   buttonText.includes('top') || 
+                                   buttonText.includes('up');
+          
+          // 只有当按钮可见、在右下角、是圆形且包含向上箭头时才认为是回到顶部按钮
+          if (isVisible && isBottomRight && isRound && hasUpArrow) {
+            console.log(`检测到回到顶部按钮: 圆形=${isRound}, 有向上箭头=${hasUpArrow}, 有回到顶部文本=${hasBackToTopText}`);
+            return true;
+          }
         }
-      });
-
-      // 标记可展开元素
-      const expandableElements = document.querySelectorAll(
-        config.expandableSelectors
-      );
-      expandableElements.forEach((element: any) => {
-        if (!shouldExcludeElement(element)) {
-          element.classList.add("crawler-identified");
-          // 添加状态标签
-          const tag = document.createElement("div");
-          tag.className = "crawler-status-tag";
-          tag.textContent = "可展开";
-          element.style.position = "relative";
-          element.appendChild(tag);
-        }
-      });
-
-      console.log(
-        `标记了 ${
-          document.querySelectorAll(".crawler-identified").length
-        } 个已识别元素`
-      );
-      console.log(
-        `标记了 ${
-          document.querySelectorAll(".crawler-heading").length
-        } 个标题元素`
-      );
-    }, crawlConfig);
-  }
-
-  /**
-   * 更新进度指示器
-   * @param progress 进度百分比 (0-100)
-   * @param status 状态信息
-   */
-  async updateProgress(progress: number, status: string): Promise<void> {
-    if (!this.page) {
-      throw new Error("页面未初始化");
-    }
-
-    await this.page.evaluate(
-      (progress, status) => {
-        const progressBar = document.getElementById("crawler-progress-bar");
-        const statusInfo = document.getElementById("crawler-status");
-
-        if (progressBar) {
-          progressBar.style.width = `${progress}%`;
-        }
-
-        if (statusInfo) {
-          statusInfo.textContent = status;
-        }
-      },
-      progress,
-      status
-    );
+      }
+      
+      return false;
+    });
   }
 
   /**

@@ -27,6 +27,14 @@ export class MarkdownProcessor {
       .replace(/•/g, '-')
       .replace(/◦/g, '  -');
     
+    // 暂时注释掉图片处理
+    // if (pageInfo.images && pageInfo.images.length > 0) {
+    //   mdContent += '\n\n## 图片\n\n';
+    //   pageInfo.images.forEach((image, index) => {
+    //     mdContent += `![${image.alt || `图片 ${index + 1}`}](${image.localPath})\n\n`;
+    //   });
+    // }
+    
     return mdContent;
   }
 
@@ -91,6 +99,7 @@ export class MarkdownProcessor {
     console.log(`内容长度: ${pageInfo.contentLength} 字符`);
     console.log(`元素数量: ${pageInfo.elementCount} 个`);
     console.log(`标题数量: ${pageInfo.headings.length} 个`);
+    console.log(`图片数量: ${pageInfo.images ? pageInfo.images.length : 0} 张`);
     console.log(`\n内容:`);
     console.log(mdContent);
     console.log(`\n=== 内容获取完成 ===`);

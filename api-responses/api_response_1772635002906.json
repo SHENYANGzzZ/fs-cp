@@ -1,0 +1,831 @@
+{
+  "data": {
+    "sample": {
+      "sample_rate": 1,
+      "include_users": [
+        "0567db3ee4e49e9cb31823c9674830eca5461481",
+        "4aec1db7b4e5b6f085a23d8c822b2aa821e8e388",
+        "ea1675bf80836b182ffddeaaa8cdca8d593a4d9c",
+        "a4de91a7fafdfa614a300c02225cc6fe5bc0b3c2",
+        "8e3b40acb82264a663cc0e4031b1e3819d91b311",
+        "d5f8fc60bccf7942b7cdb1c324bbe05f0f5969ce",
+        "51db17b86ef3f59b94dbbfcb9072d2fb0886b943",
+        "f5791292f4949aab0c0cdd696f9498810d07440d",
+        "f7671dcb51929d197f8ef1d7c5f1bad2064f2773",
+        "9ffc3d77606bb02553acba3cb2c2195e402b7fb6",
+        "f008e33baa578b1487966dfc0eb5249e00fa2ff3",
+        "03b854783292d7977d11ea885119a23c3fac0177",
+        "3205416c6a4837416482311b4eb5ae9b181ad7af",
+        "d1cbe2f1977e77e577d3b323231920349878ff57",
+        "2a81ba598883199c6b5f8acc05a98a02b4e7d164",
+        "3db41d220f1d2553bff16ff1971784a3f9d9c4a9",
+        "3304a83fb43b3d443aeab80358634446225f5ffc",
+        "4466ee3cd5c0157916a55da4f99b2649fe330e02",
+        "202f9cbf4fb7588d1a7246eb8c5641c7da53c488",
+        "f5243526520116cd86086420b6a940d20bb45889",
+        "26c6b65badeb23edc85e51d8e05f47fd60cdb684",
+        "bbf4add0c047f894e930b8f690dd8ec99eb3a574",
+        "0fa23214246f2ed70fb88cba485b49bb76ec50a3",
+        "4a2a8b12855e9b30178d77c52da860979557233b",
+        "a976ac08836b836e818357000b161f1fb94fa13e"
+      ],
+      "sample_granularity": "session",
+      "rules": [
+        {
+          "name": "js_error",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": [
+            {
+              "sample_rate": 0.1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.message",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "QuotaExceededError|The quota has been exceeded|Failed to read large IndexedDB value"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.name",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "The quota has been exceeded|timeout of 10000ms exceeded|Forbidden|Network Error|UnhandledRejection|无权限|Failed to fetch|QUIT_EDIT is offline|GET_EDITMODE_QUANTITY is offline|REQUEST_BIZ_ERROR|QuotaExceededError|Missing name of this error"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.message",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "Network Error|Request failed with status code 403|Forbidden|ResizeObserver loop limit exceeded|Doc word overlap!|REQUEST_BIZ_ERROR|SHOW_ERROR_MODAL|Request Retry Failed|QuotaExceededError: An attempt was made to add something to storage that exceeded the quota.|Non-Error promise rejection captured with value: Error! Without component|QuotaExceededError: The quota has been exceeded.|SourceNotExist|QUIT_EDIT is offline|timeout of 10000ms exceeded|timeout of 15000ms exceeded|Request failed with status code 429|Failed to fetch|login required!|Can't find Context|Not Exist|Login Required|文档已经被删除|note has been deleted|RequestCancelledByUser|GET_EDITMODE_QUANTITY is offline|[DOM Dirty] force refresh line|Non-Error promise rejection captured with value: undefined|SyntaxError: IntersectionObserver constructor: rootMargin must be specified in pixels or percent.|SyntaxError: SyntaxError|Non-Error exception captured with keys: ex|SLAError:1010 Module:spreadsheet|NodePermFailCodeFail|call getContentState after editor destroy|dependent service error|Doc viewport is invisible!|Request failed with status code 400|无权限|hooks call error: Cannot convert undefined or null to object|Parameter Error|fatal: [WIKI_PAGE_TREE_SYNC_MOV_V2] sync node in tree|micro version abnormal|no permission|NodePermFail|docsdk debug|IndexSizeError: Failed to execute 'getRangeAt' on 'Selection': 0 is not a valid index.|Cannot read properties of undefined (reading 'type')|Script error.|version too old|opening backing store|Cannot read properties of undefined (reading 'split')|PermFail|Internal error|Failed to read large IndexedDB value"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.message",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "deprecated moirae method call.*"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.message",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "calcId not found in context",
+                      "ResizeObserver loop completed with undelivered notifications."
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.message",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "table record is exceed max record"
+                    ]
+                  },
+                  {
+                    "type": "rule",
+                    "field": "payload.error.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "Error"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.error.message",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "tableId is dashboard"
+                    ]
+                  },
+                  {
+                    "type": "rule",
+                    "field": "payload.error.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "Error"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "http",
+          "enable": true,
+          "sample_rate": 0.005,
+          "conditional_sample_rules": [
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      ".*space/api/fe/csrconfig.*"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0.1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.response.status",
+                    "op": "gte",
+                    "groupKey": "",
+                    "values": [
+                      "400"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0.1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      ".*space/api/wiki/v2.*"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/explorer/v2/create/object"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/obj_template/create_obj"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/bitable/(.*?)/client_vars",
+                      "api/v1/bitable/(.*?)/records"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/v1/bitable/(.*?)/clientvars"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/slide/blocks/user_change",
+                      "/space/api/slide/pages/client_vars",
+                      "/space/api/slide/blocks/fetch_miss"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      ".*space/api/slide/pages/client_vars.*"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.api",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "api/v1/bitable/(.*?)/groups",
+                      "api/v1/bitable/(.*?)/ondemand/records",
+                      "api/v1/bitable/(.*?)/search-records",
+                      "api/v1/bitable/(.*?)/hierarchy-records",
+                      "api/v1/bitable/(.*?)/ondemand/group/stats"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "base_ai_ware"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0.1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/v2/sheet/blocks/chart/snapshot"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0.1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/v3/sheet/blocks/chart/get_data"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0.1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/v3/sheet/blocks/chart/get_slicer_data",
+                      "/space/api/v2/sheet/blocks/dashboard/copy_layout",
+                      "/space/api/v2/sheet/blocks/base/datasources"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.request.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "/space/api/baseapp/.*",
+                      "/space/api/v2/sheet/blocks/baseapp/web_ssr/charts"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "performance",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": []
+        },
+        {
+          "name": "resource_error",
+          "enable": true,
+          "sample_rate": 0.1,
+          "conditional_sample_rules": [
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "blob",
+                      "slardar-bd"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "resource",
+          "enable": true,
+          "sample_rate": 0.3,
+          "conditional_sample_rules": [
+            {
+              "sample_rate": 0,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "common.url",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "blob:",
+                      "slardar-bd"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "custom",
+          "enable": true,
+          "sample_rate": 0.1,
+          "conditional_sample_rules": [
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "base.pref.im_stage"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.categories.biz",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "slide"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "slide_perf_collect"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 0.5,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "slide_event"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.categories.logCategory",
+                    "op": "regex",
+                    "groupKey": "",
+                    "values": [
+                      "ccm\\.platform.*"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "client_bitable_biz_error_dev"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.categories.log_type",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "bitable_log"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.level",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "error"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "performance_timing",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": []
+        },
+        {
+          "name": "performance_longtask",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": []
+        },
+        {
+          "name": "pageview",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": []
+        },
+        {
+          "name": "action",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": [
+            {
+              "sample_rate": 1,
+              "filter": {
+                "type": "and",
+                "children": [
+                  {
+                    "type": "rule",
+                    "field": "payload.target.name",
+                    "op": "eq",
+                    "groupKey": "",
+                    "values": [
+                      "base.pref.im_stage"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "blank_screen",
+          "enable": true,
+          "sample_rate": 1,
+          "conditional_sample_rules": []
+        }
+      ]
+    },
+    "user_id": "d7c7e91a-862a-89ef-2951-c61a2830daa5",
+    "plugins": {
+      "heatmap": {
+        "open_list": [],
+        "url": "https://lf3-short.bytegoofy.com/slardar/heatmap/resource/heatmap.cn.js"
+      }
+    },
+    "quota_rate": 1,
+    "timestamp": 1772634834463,
+    "apdex": {
+      "satisfying_threshold": 0.5,
+      "frustrating_threshold": 0.3,
+      "error_weight": [
+        8,
+        5,
+        2,
+        5000
+      ],
+      "duration_apdex": [
+        [
+          {
+            "weight": 0,
+            "threshold": 1000
+          },
+          {
+            "weight": 1,
+            "threshold": 3000
+          },
+          {
+            "weight": 2
+          }
+        ],
+        [
+          {
+            "weight": 0,
+            "threshold": 300
+          },
+          {
+            "weight": 1,
+            "threshold": 1500
+          },
+          {
+            "weight": 1
+          }
+        ],
+        [
+          {
+            "weight": 0,
+            "threshold": 300
+          },
+          {
+            "weight": 2,
+            "threshold": 1500
+          },
+          {
+            "weight": 2
+          }
+        ]
+      ],
+      "perf_apdex": {
+        "action": [
+          {
+            "weight": 3,
+            "threshold": 2500
+          },
+          {
+            "weight": 3,
+            "threshold": 5000
+          },
+          {
+            "weight": 3
+          }
+        ],
+        "cls": [
+          {
+            "weight": 3,
+            "threshold": 0.1
+          },
+          {
+            "weight": 3,
+            "threshold": 0.25
+          },
+          {
+            "weight": 3
+          }
+        ],
+        "fcp": [
+          {
+            "weight": 3,
+            "threshold": 2000
+          },
+          {
+            "weight": 3,
+            "threshold": 4000
+          },
+          {
+            "weight": 3
+          }
+        ],
+        "fp": [
+          {
+            "weight": 3,
+            "threshold": 0
+          },
+          {
+            "weight": 3,
+            "threshold": 0
+          },
+          {
+            "weight": 3
+          }
+        ],
+        "lcp": [
+          {
+            "weight": 3,
+            "threshold": 2500
+          },
+          {
+            "weight": 3,
+            "threshold": 4000
+          },
+          {
+            "weight": 3
+          }
+        ]
+      },
+      "last_n": 180000
+    }
+  },
+  "errmsg": "success",
+  "errno": 200
+}

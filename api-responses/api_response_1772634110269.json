@@ -1,0 +1,83 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "resultMap": {
+      "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_FILE_DOWNLOAD\",\"entityType\":\"FILE\",\"fileBizDomain\":\"CCM\",\"fileInfo\":{\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"type\":22},\"operatorTenantId\":\"7613405468806908881\",\"operatorUid\":\"7613405468781759452\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_FILE_DOWNLOAD\"}": {
+        "effect": "PERMIT",
+        "actions": [],
+        "appliedPolicySetResults": [
+          {
+            "policySetKey": "FILE_PROTECT",
+            "isEvaluated": false
+          },
+          {
+            "policySetKey": "POLICY_CENTER",
+            "isEvaluated": false
+          }
+        ],
+        "enforcementID": "4f631007-52ad-4d1f-9e7f-48136f0bee71"
+      },
+      "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_PRINT\",\"entityType\":\"DOC\",\"fileBizDomain\":\"CCM\",\"fileInfo\":{\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"type\":22},\"operatorTenantId\":\"7613405468806908881\",\"operatorUid\":\"7613405468781759452\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_PRINT\"}": {
+        "effect": "PERMIT",
+        "actions": [],
+        "appliedPolicySetResults": [
+          {
+            "isEvaluated": false,
+            "policySetKey": "FILE_PROTECT"
+          },
+          {
+            "policySetKey": "POLICY_CENTER",
+            "isEvaluated": false
+          }
+        ],
+        "enforcementID": "f0dea260-aac0-4fdf-a01a-4bdcd2f2a81f"
+      },
+      "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_CONTENT_PREVIEW\",\"entityType\":\"DOC\",\"fileBizDomain\":\"CCM\",\"fileInfo\":{\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"type\":22},\"operatorTenantId\":\"7613405468806908881\",\"operatorUid\":\"7613405468781759452\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_CONTENT_PREVIEW\"}": {
+        "effect": "PERMIT",
+        "actions": [],
+        "appliedPolicySetResults": [
+          {
+            "policySetKey": "FILE_PROTECT",
+            "isEvaluated": false
+          },
+          {
+            "policySetKey": "POLICY_CENTER",
+            "isEvaluated": false
+          }
+        ],
+        "enforcementID": "110d2b44-806c-4894-81fc-ceeae0b9ff66"
+      },
+      "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_EXPORT\",\"entityType\":\"DOC\",\"fileBizDomain\":\"CCM\",\"fileInfo\":{\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"type\":22},\"operatorTenantId\":\"7613405468806908881\",\"operatorUid\":\"7613405468781759452\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_EXPORT\"}": {
+        "appliedPolicySetResults": [
+          {
+            "policySetKey": "FILE_PROTECT",
+            "isEvaluated": false
+          },
+          {
+            "policySetKey": "POLICY_CENTER",
+            "isEvaluated": false
+          }
+        ],
+        "enforcementID": "03fe16ff-d28f-44ae-b9e3-dea521f930a1",
+        "effect": "PERMIT",
+        "actions": []
+      },
+      "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_PRINT\",\"entityType\":\"FILE\",\"fileBizDomain\":\"CCM\",\"fileInfo\":{\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"type\":22},\"operatorTenantId\":\"7613405468806908881\",\"operatorUid\":\"7613405468781759452\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_PRINT\"}": {
+        "effect": "PERMIT",
+        "actions": [],
+        "appliedPolicySetResults": [
+          {
+            "policySetKey": "FILE_PROTECT",
+            "isEvaluated": false
+          },
+          {
+            "policySetKey": "POLICY_CENTER",
+            "isEvaluated": false
+          }
+        ],
+        "enforcementID": "266f3af4-b98f-4b62-9a94-efe3b60dc8df"
+      }
+    }
+  }
+}

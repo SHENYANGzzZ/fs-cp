@@ -1,15 +1,9 @@
 import { crawlFeishuDoc } from "./crawler";
 
-// 获取命令行参数
-const args = process.argv.slice(2);
-const url = args[0];
-const useCache = !args.includes("--no-cache");
+// 硬编码测试URL
+const url = "https://jcny2we8lxya.feishu.cn/wiki/Wb99wXcBYiVMyzkg9WrcftSlntd";
+const useCache = false; // 暂时禁用缓存，确保修改的代码生效
 
-if (!url) {
-  console.error("请提供飞书文档URL");
-  process.exit(1);
-}
-
-console.log(`使用用户提供的网址: ${url}`);
+console.log(`使用测试网址: ${url}`);
 console.log(`是否使用缓存: ${useCache}`);
 crawlFeishuDoc(url, undefined, useCache);

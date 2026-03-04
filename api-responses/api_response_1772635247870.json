@@ -1,0 +1,44 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "create_guide_user": {
+      "create_file_num": 0,
+      "view_others_file_num": 0
+    },
+    "mindnote": {
+      "has_create_mindnote": 0
+    },
+    "reminder": {
+      "has_used_reminder": 0
+    },
+    "user": {
+      "docs_acc_editor_redo_count": 0,
+      "docs_acc_play_mode_enter_count": 0,
+      "docs_acc_comment_count": 0,
+      "sheet_pc_is_open": 0,
+      "docs_acc_create_doc_count": 0,
+      "docs_acc_open_share_count": 0,
+      "docs_acc_enter_home_count": 0,
+      "docs_acc_enter_lab_index_count": 0,
+      "sheet_pc_is_edit": 0,
+      "user_bitable_is_edit": 0,
+      "sheet_card_view_is_edit": 0,
+      "sheet_mobile_reminder_is_insert": 0,
+      "sheet_mobile_is_share_image": 0,
+      "sheet_mobile_share_image_badge_share_panel_is_finish": 0,
+      "sheet_checkbox_is_insert": 0,
+      "docs_first_create_file_time": 0,
+      "sheet_mobile_is_open": 0,
+      "sheet_mobile_is_edit": 0,
+      "sheet_mobile_reminder_badge_is_finish": 0,
+      "sheet_mobile_share_image_badge_more_panel_is_finish": 0,
+      "dropdown_menu_is_confirm": 0,
+      "docs_acc_editor_undo_count": 0,
+      "docs_acct_share_page_enter_count": 0,
+      "sheet_pc_is_create": 0,
+      "sheet_mobile_is_create": 0,
+      "sheet_mobile_share_image_badge_fab_is_finish": 0
+    }
+  }
+}

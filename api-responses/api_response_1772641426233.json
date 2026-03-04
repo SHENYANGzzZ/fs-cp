@@ -1,0 +1,92 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "is_stared": false,
+    "delete_flag": 0,
+    "sec_label": null,
+    "create_date": "20250529",
+    "create_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860",
+        "zh_cn": "用户3860"
+      }
+    },
+    "edit_user_i18n_value": {
+      "zh_cn": "用户3860",
+      "en_us": "user 3860",
+      "ja_jp": "ユーザー 3860"
+    },
+    "fresh_info": {
+      "update_time": 0,
+      "operator_id": "0",
+      "deadline_time": 0,
+      "feed_back_num": 0,
+      "may_expire_show_num": 0,
+      "fresh_status": 0
+    },
+    "create_source": 17,
+    "edit_time": 1748484961,
+    "owner_id": "7508649992253833217",
+    "title": "AutoGen篇-AutoGen快速入门",
+    "title_secure_key_deleted": false,
+    "create_time": 1748484735,
+    "owner_user_i18n_value": {
+      "zh_cn": "用户3860",
+      "en_us": "user 3860",
+      "ja_jp": "ユーザー 3860"
+    },
+    "extra_fields": {},
+    "server_time": 1772641415,
+    "icon_info": "{\"type\":2,\"key\":\"wathet_calendar.png\",\"obj_type\":22,\"file_type\":null,\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"version\":65}",
+    "can_set_sec_label": 0,
+    "sec_label_type": 0,
+    "get_sec_label_code": 3,
+    "edit_user_name": "用户3860",
+    "owner_user_name": "用户3860",
+    "create_user_name": "用户3860",
+    "owner_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "zh_cn": "用户3860",
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860"
+      }
+    },
+    "tenant_id": "7508649064266088476",
+    "url": "https://jcny2we8lxya.feishu.cn/docx/BUlfdzsFNoMwsgxyqJscDUQrntb",
+    "real_sub_type": 100,
+    "double_check_default_label": false,
+    "must_set_label": false,
+    "sec_label_banner_status": null,
+    "edit_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "ja_jp": "ユーザー 3860",
+        "zh_cn": "用户3860",
+        "en_us": "user 3860"
+      }
+    },
+    "doubao_conversation_id": 0,
+    "sub_type": "",
+    "paywall_enabled": false,
+    "recommend_label_id": null,
+    "template_type": 0,
+    "obj_id": "7509684745581068292",
+    "ai_prompt_id": "0",
+    "create_uid": "7508649992253833217",
+    "is_pined": false,
+    "owner_user_type": "1",
+    "default_label_id": "0",
+    "display_tag": {
+      "tag_value": ""
+    },
+    "type": 22,
+    "is_external": false,
+    "version": 65,
+    "obj_type": "docx",
+    "sec_label_banner_type": null
+  }
+}

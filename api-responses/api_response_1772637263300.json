@@ -1,0 +1,92 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "version": 65,
+    "is_external": false,
+    "is_pined": false,
+    "can_set_sec_label": 0,
+    "title_secure_key_deleted": false,
+    "recommend_label_id": null,
+    "sub_type": "",
+    "ai_prompt_id": "0",
+    "delete_flag": 0,
+    "create_time": 1748484735,
+    "double_check_default_label": false,
+    "owner_user_type": "1",
+    "extra_fields": {},
+    "template_type": 0,
+    "create_date": "20250529",
+    "display_tag": {
+      "tag_value": ""
+    },
+    "sec_label": null,
+    "sec_label_banner_type": null,
+    "tenant_id": "7508649064266088476",
+    "default_label_id": "0",
+    "is_stared": false,
+    "owner_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "zh_cn": "用户3860",
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860"
+      }
+    },
+    "edit_user_i18n_value": {
+      "en_us": "user 3860",
+      "ja_jp": "ユーザー 3860",
+      "zh_cn": "用户3860"
+    },
+    "get_sec_label_code": 3,
+    "sec_label_banner_status": null,
+    "owner_id": "7508649992253833217",
+    "sec_label_type": 0,
+    "doubao_conversation_id": 0,
+    "owner_user_i18n_value": {
+      "en_us": "user 3860",
+      "ja_jp": "ユーザー 3860",
+      "zh_cn": "用户3860"
+    },
+    "edit_time": 1748484961,
+    "create_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "zh_cn": "用户3860",
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860"
+      }
+    },
+    "create_user_name": "用户3860",
+    "edit_user_name": "用户3860",
+    "icon_info": "{\"type\":2,\"key\":\"wathet_calendar.png\",\"obj_type\":22,\"file_type\":null,\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"version\":65}",
+    "create_source": 17,
+    "server_time": 1772637252,
+    "owner_user_name": "用户3860",
+    "edit_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "zh_cn": "用户3860",
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860"
+      }
+    },
+    "fresh_info": {
+      "fresh_status": 0,
+      "update_time": 0,
+      "operator_id": "0",
+      "deadline_time": 0,
+      "feed_back_num": 0,
+      "may_expire_show_num": 0
+    },
+    "real_sub_type": 100,
+    "url": "https://jcny2we8lxya.feishu.cn/docx/BUlfdzsFNoMwsgxyqJscDUQrntb",
+    "create_uid": "7508649992253833217",
+    "obj_id": "7509684745581068292",
+    "paywall_enabled": false,
+    "obj_type": "docx",
+    "type": 22,
+    "must_set_label": false,
+    "title": "AutoGen篇-AutoGen快速入门"
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "my_color_id": 31,
+    "count": 5,
+    "version": 1631713392129,
+    "members": [
+      {
+        "user_id": "7613382524891106506",
+        "member_id": "55647509100370",
+        "touch_time": 1772633875,
+        "color_id": 24,
+        "cursor_info": null,
+        "user_email": "",
+        "user_mobile": "",
+        "avatar_url": "",
+        "user_name": "",
+        "create_time": 1772628755
+      },
+      {
+        "user_id": "7613387061353041097",
+        "member_id": "33263437482491",
+        "touch_time": 1772633652,
+        "color_id": 26,
+        "cursor_info": null,
+        "user_email": "",
+        "user_mobile": "",
+        "avatar_url": "",
+        "user_name": "",
+        "create_time": 1772633351
+      },
+      {
+        "user_id": "7613403628438555592",
+        "member_id": "49257226847200",
+        "touch_time": 1772633669,
+        "color_id": 29,
+        "cursor_info": null,
+        "user_email": "",
+        "user_mobile": "",
+        "avatar_url": "",
+        "user_name": "",
+        "create_time": 1772633669
+      },
+      {
+        "user_id": "7613404092508933065",
+        "member_id": "74430936404131",
+        "touch_time": 1772633777,
+        "color_id": 30,
+        "cursor_info": null,
+        "user_email": "",
+        "user_mobile": "",
+        "avatar_url": "",
+        "user_name": "",
+        "create_time": 1772633777
+      },
+      {
+        "user_id": "7613404649307000009",
+        "member_id": "65351337948884",
+        "touch_time": 1772633907,
+        "color_id": 31,
+        "cursor_info": null,
+        "user_email": "",
+        "user_mobile": "",
+        "avatar_url": "",
+        "user_name": "",
+        "create_time": 1772633907
+      }
+    ],
+    "entities": {
+      "users": {
+        "7613382524891106506": {
+          "cn_name": "访客 22429",
+          "en_name": "Guest User 22429",
+          "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/09c2f0c1-c364-4575-b826-3588a51b2e9e~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+          "user_email": "",
+          "user_mobile": "",
+          "is_anonymous": 2,
+          "user_type": 2,
+          "i18n_names": {
+            "en_us": "Guest User 22429",
+            "ja_jp": "ゲストユーザー 22429",
+            "zh_cn": "访客 22429"
+          },
+          "is_desensitize": false,
+          "has_no_user_info": false,
+          "display_name": {
+            "value": "访客 22429",
+            "i18n_value": {
+              "en_us": "Guest User 22429",
+              "ja_jp": "ゲストユーザー 22429",
+              "zh_cn": "访客 22429"
+            }
+          },
+          "allow_show_collaboration_avatar": true
+        },
+        "7613387061353041097": {
+          "cn_name": "访客 25275",
+          "en_name": "Guest User 25275",
+          "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/09c2f0c1-c364-4575-b826-3588a51b2e9e~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+          "user_email": "",
+          "user_mobile": "",
+          "is_anonymous": 2,
+          "user_type": 2,
+          "i18n_names": {
+            "en_us": "Guest User 25275",
+            "ja_jp": "ゲストユーザー 25275",
+            "zh_cn": "访客 25275"
+          },
+          "is_desensitize": false,
+          "has_no_user_info": false,
+          "display_name": {
+            "value": "访客 25275",
+            "i18n_value": {
+              "en_us": "Guest User 25275",
+              "ja_jp": "ゲストユーザー 25275",
+              "zh_cn": "访客 25275"
+            }
+          },
+          "allow_show_collaboration_avatar": true
+        },
+        "7613403628438555592": {
+          "cn_name": "访客 78659",
+          "en_name": "Guest User 78659",
+          "avatar_url": "https://s1-imfile.feishucdn.com/static-resource/v1/d8853c01-f8e5-44ce-b17c-1c748cb277de~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+          "user_email": "",
+          "user_mobile": "",
+          "is_anonymous": 2,
+          "user_type": 2,
+          "i18n_names": {
+            "en_us": "Guest User 78659",
+            "ja_jp": "ゲストユーザー 78659",
+            "zh_cn": "访客 78659"
+          },
+          "is_desensitize": false,
+          "has_no_user_info": false,
+          "display_name": {
+            "value": "访客 78659",
+            "i18n_value": {
+              "en_us": "Guest User 78659",
+              "ja_jp": "ゲストユーザー 78659",
+              "zh_cn": "访客 78659"
+            }
+          },
+          "allow_show_collaboration_avatar": true
+        },
+        "7613404092508933065": {
+          "cn_name": "访客 89685",
+          "en_name": "Guest User 89685",
+          "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/704482df-384d-48fa-8cf7-79433efc79bf~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+          "user_email": "",
+          "user_mobile": "",
+          "is_anonymous": 2,
+          "user_type": 2,
+          "i18n_names": {
+            "en_us": "Guest User 89685",
+            "ja_jp": "ゲストユーザー 89685",
+            "zh_cn": "访客 89685"
+          },
+          "is_desensitize": false,
+          "has_no_user_info": false,
+          "display_name": {
+            "value": "访客 89685",
+            "i18n_value": {
+              "en_us": "Guest User 89685",
+              "ja_jp": "ゲストユーザー 89685",
+              "zh_cn": "访客 89685"
+            }
+          },
+          "allow_show_collaboration_avatar": true
+        },
+        "7613404649307000009": {
+          "cn_name": "访客 26335",
+          "en_name": "Guest User 26335",
+          "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/704482df-384d-48fa-8cf7-79433efc79bf~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+          "user_email": "",
+          "user_mobile": "",
+          "is_anonymous": 2,
+          "user_type": 2,
+          "i18n_names": {
+            "en_us": "Guest User 26335",
+            "ja_jp": "ゲストユーザー 26335",
+            "zh_cn": "访客 26335"
+          },
+          "is_desensitize": false,
+          "has_no_user_info": false,
+          "display_name": {
+            "value": "访客 26335",
+            "i18n_value": {
+              "en_us": "Guest User 26335",
+              "ja_jp": "ゲストユーザー 26335",
+              "zh_cn": "访客 26335"
+            }
+          },
+          "allow_show_collaboration_avatar": true
+        }
+      }
+    },
+    "trigger_fetch_user_count": 20,
+    "return_user_count_limit": 30
+  }
+}

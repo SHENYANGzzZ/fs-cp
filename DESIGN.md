@@ -2,13 +2,13 @@
 
 ## 1. 项目概述
 
-本项目是一个飞书文档爬虫工具，用于从飞书文档URL中提取完整的文章内容，并将其转换为Markdown格式。该工具使用Puppeteer模拟浏览器行为，能够处理动态加载的内容和折叠的部分，确保获取完整的文档内容。
+本项目是一个飞书文档爬虫工具，用于从飞书文档URL中提取完整的文章内容，并将其转换为Word格式。该工具使用Puppeteer模拟浏览器行为，能够处理动态加载的内容和折叠的部分，确保获取完整的文档内容。
 
 ### 1.1 功能目标
 - 从飞书文档URL获取完整的文章内容
 - 支持处理动态加载的内容
 - 支持展开折叠的内容
-- 将内容转换为Markdown格式
+- 将内容转换为Word格式
 - 保存为本地文件并直接打印内容
 
 ### 1.2 技术栈
@@ -37,7 +37,7 @@
 └────────┬────────┘
          │
 ┌────────▼────────┐
-│ Markdown处理    │
+│ Word处理        │
 └────────┬────────┘
          │
 ┌────────▼────────┐
@@ -62,7 +62,7 @@
 | 内容提取 | 从页面中提取内容 | src/utils/content-extractor.ts |
 | 错误处理 | 提供统一的错误处理机制 | src/utils/error-handler.ts |
 | HTTP工具 | 提供HTTP相关工具函数 | src/utils/http.ts |
-| Markdown处理 | 将内容转换为Markdown格式 | src/utils/markdown-processor.ts |
+| Word处理 | 将内容转换为Word格式 | src/utils/word-processor.ts |
 | 并行处理 | 支持并行爬取多个文档 | src/utils/parallel-processor.ts |
 
 ## 3. 核心功能实现
@@ -85,23 +85,51 @@
 
 ### 3.3 内容提取
 
-从页面中提取关键信息：
+从页面中提取关键信息，使用多种内容选择器以确保捕获完整内容：
 
 - 标题：从`document.title`获取
-- 正文内容：从`.page-main-item.editor`元素获取
+- 正文内容：尝试多种内容选择器，包括：
+  ```typescript
+  const contentSelectors = [
+    '.page-main-item.editor',
+    '.page-main-item.editor .doc-content',
+    '.doc-content',
+    '.editor-container',
+    '.lark-editor-content',
+    '.wiki-content',
+    '.wiki-page-content',
+    '.lark-wiki-content',
+    '.feishu-wiki-content',
+    '.docs-doc-content',
+    '.docs-editor',
+    '.article-content',
+    '.content-area',
+    '.page-content',
+    '.main-content',
+    '.document-content',
+    '.content-container',
+    '.editor-content',
+    '.rich-text-editor',
+    '.prose-content',
+    'main',
+    'article',
+    'body'
+  ];
+  ```
 - 标题层级：提取所有标题元素，用于结构分析
+- 内容长度阈值：设置为500字符，确保捕获更多内容
 
 ### 3.4 格式转换
 
-将提取的内容转换为Markdown格式：
+将提取的内容转换为Word格式：
 
 - 处理文本格式，转换换行符
-- 处理列表标记，转换为Markdown列表格式
-- 生成标准Markdown文档结构
+- 保持原始文本结构
+- 生成标准Word文档
 
 ### 3.5 输出处理
 
-- 保存为本地Markdown文件
+- 保存为本地Word文件
 - 直接在控制台打印内容，方便实时查看
 
 ## 4. 代码结构
@@ -121,7 +149,7 @@ feishu-shadow/
 │   │   ├── content-extractor.ts  # 内容提取
 │   │   ├── error-handler.ts      # 错误处理
 │   │   ├── http.ts               # HTTP工具
-│   │   ├── markdown-processor.ts # Markdown处理
+│   │   ├── word-processor.ts     # Word处理
 │   │   └── parallel-processor.ts # 并行处理
 │   └── index.ts           # 入口文件
 ├── cache/                 # 缓存目录
@@ -146,47 +174,34 @@ feishu-shadow/
 9. **提取内容**：从页面中提取标题、正文和其他信息
 10. **关闭浏览器**：清理浏览器资源
 11. **保存缓存**：将提取的内容保存到缓存
-12. **转换格式**：将内容转换为Markdown格式
+12. **转换格式**：将内容转换为Word格式
 13. **保存输出**：保存为本地文件并打印内容
 
 ## 6. 关键技术点
 
-### 6.1 自适应滚动
+### 6.1 自适应滚动与回到顶部按钮检测
 
-根据内容加载情况动态调整滚动行为，避免固定滚动次数的局限性：
+根据内容加载情况动态调整滚动行为，并通过检测回到顶部按钮的可见性变化来判断内容是否完全加载：
 
 ```typescript
 async adaptiveScroll(): Promise<void> {
   // 等待页面完全加载
   await this.waitForPageLoad();
   
+  // 初始化回到顶部按钮状态
+  await this.initBackToTopButtonState();
+  
   // 滚动到页面顶部
   await this.page.evaluate(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
   
-  let previousHeight = 0;
-  let consecutiveSameHeight = 0;
   let scrollCount = 0;
   
-  // 循环滚动，直到内容不再变化或达到最大滚动次数
+  // 循环滚动，直到检测到回到顶部按钮或达到最大滚动次数
   while (scrollCount < maxScrolls) {
-    // 获取当前页面高度
-    const currentHeight = await this.page.evaluate(() => document.body.scrollHeight);
-    
-    // 检查页面高度是否变化
-    if (currentHeight === previousHeight) {
-      consecutiveSameHeight++;
-      // 如果连续多次高度相同，说明内容已加载完成
-      if (consecutiveSameHeight >= maxConsecutiveSameHeight) {
-        break;
-      }
-    } else {
-      consecutiveSameHeight = 0;
-    }
-    
     // 滚动到页面的下一个位置
-    const scrollPosition = (currentHeight / 10) * (scrollCount % 10);
+    const scrollPosition = 1000 * scrollCount;
     await this.page.evaluate((position) => {
       window.scrollTo({ top: position, behavior: 'smooth' });
     }, scrollPosition);
@@ -197,13 +212,81 @@ async adaptiveScroll(): Promise<void> {
     // 展开折叠内容
     await this.expandContent();
     
-    // 更新 previousHeight
-    previousHeight = currentHeight;
+    // 检测回到顶部按钮是否出现
+    const backToTopVisible = await this.detectBackToTopButtonVisibilityChange();
+    if (backToTopVisible) {
+      console.log('检测到回到顶部按钮，停止滚动');
+      break;
+    }
+    
     scrollCount++;
   }
   
   // 滚动到页面底部，确保所有内容加载
   await this.scrollToBottom();
+}
+
+// 初始化回到顶部按钮的初始状态
+async initBackToTopButtonState(): Promise<void> {
+  this.initialBackToTopButtonState = await this.hasBackToTopButton();
+  console.log(`回到顶部按钮初始状态: ${this.initialBackToTopButtonState}`);
+}
+
+// 检测回到顶部按钮是否存在
+async hasBackToTopButton(): Promise<boolean> {
+  if (!this.page) {
+    throw new Error("页面未初始化");
+  }
+  
+  try {
+    // 尝试多种选择器来检测回到顶部按钮
+    const selectors = [
+      '.back-to-top',
+      '.go-top',
+      '.to-top',
+      '[data-testid="back-to-top"]',
+      '[aria-label*="回到顶部"]',
+      '[aria-label*="back to top"]',
+      '.lark-back-to-top',
+      '.feishu-back-to-top',
+      '.wiki-back-to-top',
+      '.doc-back-to-top'
+    ];
+    
+    for (const selector of selectors) {
+      const elements = await this.page.$$(selector);
+      for (const element of elements) {
+        const isVisible = await this.page.evaluate(el => {
+          const style = window.getComputedStyle(el);
+          return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+        }, element);
+        
+        if (isVisible) {
+          console.log(`找到可见的回到顶部按钮: ${selector}`);
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('检测回到顶部按钮时出错:', error);
+    return false;
+  }
+}
+
+// 检测回到顶部按钮可见性变化
+async detectBackToTopButtonVisibilityChange(): Promise<boolean> {
+  if (!this.page) {
+    throw new Error("页面未初始化");
+  }
+  
+  console.log("检测回到顶部按钮可见性变化...");
+  const currentState = await this.hasBackToTopButton();
+  console.log(`回到顶部按钮当前状态: ${currentState}, 初始状态: ${this.initialBackToTopButtonState}`);
+  
+  // 检查是否从隐藏变为显示
+  return !this.initialBackToTopButtonState && currentState;
 }
 ```
 
@@ -330,9 +413,13 @@ async launch(): Promise<void> {
 **问题**：有时只能提取到文档的部分内容
 **解决方案**：尝试多种内容提取策略，包括从特定元素提取、从整个页面提取、从脚本标签中的JSON数据提取
 
+### 7.9 回到顶部按钮检测
+**问题**：需要准确检测回到顶部按钮的出现，以判断内容是否完全加载
+**解决方案**：实现回到顶部按钮状态跟踪，检测其从隐藏到显示的变化，使用多种选择器确保检测准确性
+
 ## 8. 未来优化方向
 
-1. **内容结构优化**：进一步优化Markdown转换，保留更多原始格式信息，如表格、代码块等
+1. **内容结构优化**：进一步优化Word转换，保留更多原始格式信息，如表格、代码块等
 2. **多媒体处理**：支持提取和保存图片、视频等多媒体内容
 3. **错误重试**：增加错误重试机制，提高稳定性
 4. **配置化**：增加配置文件，支持更多自定义选项
@@ -370,15 +457,15 @@ npx ts-node src/index.ts https://jcny2we8lxya.feishu.cn/wiki/QBZ7wUMVwiR0NRkIGGb
 
 ## 10. 总结
 
-本项目实现了一个功能完整、性能优化的飞书文档爬虫，能够从飞书文档URL中提取完整的文章内容，并转换为Markdown格式。通过使用Puppeteer模拟浏览器行为，解决了动态内容加载和折叠内容展开的问题，确保获取完整的文档内容。
+本项目实现了一个功能完整、性能优化的飞书文档爬虫，能够从飞书文档URL中提取完整的文章内容，并转换为Word格式。通过使用Puppeteer模拟浏览器行为，解决了动态内容加载和折叠内容展开的问题，确保获取完整的文档内容。
 
 ### 项目特点
 
-1. **自适应滚动**：根据内容加载情况动态调整滚动行为，避免固定滚动次数的局限性
+1. **自适应滚动与回到顶部按钮检测**：根据内容加载情况动态调整滚动行为，并通过检测回到顶部按钮的可见性变化来判断内容是否完全加载
 2. **缓存机制**：实现缓存机制，避免重复爬取相同的文档，提高效率
 3. **并行处理**：支持并行爬取多个文档，提高爬取速度
 4. **浏览器优化**：优化浏览器启动和标签页管理，避免多余的空白标签页
-5. **多策略内容提取**：尝试多种内容提取策略，提高内容提取的完整性
+5. **多策略内容提取**：尝试多种内容提取策略，使用多个内容选择器确保捕获完整内容
 6. **模块化设计**：代码结构清晰，模块化设计便于维护和扩展
 7. **类型安全**：采用TypeScript开发，提供类型安全和更好的开发体验
 
@@ -388,4 +475,4 @@ npx ts-node src/index.ts https://jcny2we8lxya.feishu.cn/wiki/QBZ7wUMVwiR0NRkIGGb
 - Puppeteer：模拟浏览器行为，处理动态内容
 - Node.js：运行环境
 
-项目已经实现了设计目标，能够成功从飞书文档中提取完整的内容并转换为Markdown格式。通过持续优化和扩展，可以进一步提高爬取效率和内容提取的准确性。
+项目已经实现了设计目标，能够成功从飞书文档中提取完整的内容并转换为Word格式。通过持续优化和扩展，可以进一步提高爬取效率和内容提取的准确性。

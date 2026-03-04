@@ -1,0 +1,92 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "sec_label_banner_type": null,
+    "create_user_name": "用户3860",
+    "is_stared": false,
+    "get_sec_label_code": 3,
+    "fresh_info": {
+      "operator_id": "0",
+      "deadline_time": 0,
+      "feed_back_num": 0,
+      "may_expire_show_num": 0,
+      "fresh_status": 0,
+      "update_time": 0
+    },
+    "edit_user_i18n_value": {
+      "zh_cn": "用户3860",
+      "en_us": "user 3860",
+      "ja_jp": "ユーザー 3860"
+    },
+    "can_set_sec_label": 0,
+    "extra_fields": {},
+    "title": "AutoGen篇-AutoGen快速入门",
+    "owner_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "ja_jp": "ユーザー 3860",
+        "zh_cn": "用户3860",
+        "en_us": "user 3860"
+      }
+    },
+    "doubao_conversation_id": 0,
+    "real_sub_type": 100,
+    "owner_id": "7508649992253833217",
+    "is_external": false,
+    "title_secure_key_deleted": false,
+    "must_set_label": false,
+    "owner_user_type": "1",
+    "version": 65,
+    "ai_prompt_id": "0",
+    "create_time": 1748484735,
+    "edit_user_name": "用户3860",
+    "obj_type": "docx",
+    "recommend_label_id": null,
+    "is_pined": false,
+    "sec_label": null,
+    "sub_type": "",
+    "create_date": "20250529",
+    "delete_flag": 0,
+    "icon_info": "{\"type\":2,\"key\":\"wathet_calendar.png\",\"obj_type\":22,\"file_type\":null,\"token\":\"BUlfdzsFNoMwsgxyqJscDUQrntb\",\"version\":65}",
+    "double_check_default_label": false,
+    "type": 22,
+    "default_label_id": "0",
+    "tenant_id": "7508649064266088476",
+    "server_time": 1772643279,
+    "create_user_display_name": {
+      "value": "用户3860",
+      "i18n_value": {
+        "zh_cn": "用户3860",
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860"
+      }
+    },
+    "display_tag": {
+      "tag_value": ""
+    },
+    "create_uid": "7508649992253833217",
+    "edit_time": 1748484961,
+    "url": "https://jcny2we8lxya.feishu.cn/docx/BUlfdzsFNoMwsgxyqJscDUQrntb",
+    "owner_user_name": "用户3860",
+    "sec_label_banner_status": null,
+    "sec_label_type": 0,
+    "template_type": 0,
+    "paywall_enabled": false,
+    "obj_id": "7509684745581068292",
+    "edit_user_display_name": {
+      "i18n_value": {
+        "zh_cn": "用户3860",
+        "en_us": "user 3860",
+        "ja_jp": "ユーザー 3860"
+      },
+      "value": "用户3860"
+    },
+    "create_source": 17,
+    "owner_user_i18n_value": {
+      "ja_jp": "ユーザー 3860",
+      "zh_cn": "用户3860",
+      "en_us": "user 3860"
+    }
+  }
+}

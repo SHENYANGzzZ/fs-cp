@@ -2,8 +2,20 @@
  * 内容提取模块
  * 负责从页面中提取飞书文档的内容
  */
+ 
+import { crawlConfig, fileConfig } from "../config";
+import fs from "fs";
+import path from "path";
+import https from "https";
 
-import { crawlConfig } from "../config";
+/**
+ * 图片信息接口
+ */
+export interface ImageInfo {
+  src: string;
+  alt: string;
+  localPath: string;
+}
 
 /**
  * 页面信息接口
@@ -12,6 +24,7 @@ export interface PageInfo {
   title: string;
   textContent: string;
   headings: string[];
+  images: ImageInfo[];
   contentLength: number;
   elementCount: number;
 }
@@ -32,290 +45,296 @@ export class ContentExtractor {
   }
 
   /**
+   * 下载图片
+   * @param imageUrl 图片URL
+   * @param localPath 本地保存路径
+   */
+  private async downloadImage(imageUrl: string, localPath: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      // 确保目录存在
+      const dir = path.dirname(localPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      // 下载图片
+      const file = fs.createWriteStream(localPath);
+      https.get(imageUrl, (response) => {
+        if (response.statusCode === 200) {
+          response.pipe(file);
+          file.on('finish', () => {
+            file.close();
+            resolve(true);
+          });
+        } else {
+          file.close();
+          resolve(false);
+        }
+      }).on('error', () => {
+        file.close();
+        resolve(false);
+      });
+    });
+  }
+
+  /**
+   * 处理图片
+   * @param images 图片信息数组
+   */
+  async processImages(images: any[]): Promise<ImageInfo[]> {
+    const processedImages: ImageInfo[] = [];
+    const imagesDir = path.join(__dirname, '../../out/images');
+
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      const imageName = `image_${Date.now()}_${i}.${img.src.split('.').pop()?.split('?')[0] || 'jpg'}`;
+      const localPath = path.join(imagesDir, imageName);
+      const relativePath = `images/${imageName}`;
+
+      console.log(`下载图片: ${img.src}`);
+      const success = await this.downloadImage(img.src, localPath);
+      
+      if (success) {
+        processedImages.push({
+          src: img.src,
+          alt: img.alt,
+          localPath: relativePath
+        });
+        console.log(`图片下载成功: ${relativePath}`);
+      } else {
+        console.log(`图片下载失败: ${img.src}`);
+      }
+    }
+
+    return processedImages;
+  }
+
+  /**
    * 从页面中提取内容
    * @param page 页面对象
    */
   async extract(page: any): Promise<PageInfo> {
     console.log("提取页面内容...");
 
-    return await page.evaluate((config: any) => {
+    // 等待页面完全加载
+    await page.waitForFunction(() => document.readyState === "complete", {
+      timeout: 30000
+    });
+    
+    // 等待网络请求完成
+    await page.waitForNetworkIdle({ timeout: 30000 });
+    
+    // 再等待一段时间，确保所有动态内容都已加载
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // 首先尝试获取飞书文档的完整内容
+    let pageInfo = await page.evaluate((config: any) => {
       const title = document.title || "未知标题";
       let allContent = "";
       let headings: string[] = [];
+      let images: any[] = [];
 
-      // 尝试获取飞书文档的内容
-      console.log("开始提取飞书文档内容...");
+      // 1. 尝试从飞书文档的主要内容容器获取内容
+      const contentSelectors = [
+        '.page-main-item.editor',
+        '.page-main-item.editor .doc-content',
+        '.doc-content',
+        '.editor-container',
+        '.lark-editor-content',
+        '.wiki-content',
+        '.wiki-page-content',
+        '.lark-wiki-content',
+        '.feishu-wiki-content',
+        '.docs-doc-content',
+        '.docs-editor',
+        '.article-content',
+        '.content-area',
+        '.page-content',
+        '.main-content',
+        '.document-content',
+        '.content-container',
+        '.editor-content',
+        '.rich-text-editor',
+        '.prose-content',
+        'main',
+        'article',
+        'body'
+      ];
 
-      // 尝试获取内容容器
-      let containerContent = "";
-      let longestContent = "";
-
-      // 检查元素是否应该被排除
-      const shouldExcludeElement = (element: Element): boolean => {
-        // 只排除明确的登录/注册相关元素
-        const loginClasses = [
-          'login', 'login-modal', 'login-dialog', 'ud__modal', 'lx-modal', 'login-btn', 'register-btn', 'auth-form'
-        ];
-        
-        // 检查元素本身的类
-        for (const cls of loginClasses) {
-          if (element.classList.contains(cls)) {
-            return true;
-          }
-        }
-        
-        // 检查元素是否包含登录/注册相关文本
-        const text = element.textContent || '';
-        if (text.includes('登录') || text.includes('注册') || text.includes('Login') || text.includes('Register')) {
-          return true;
-        }
-        
-        return false;
-      };
-
-      // 先找到最长的内容容器
-      for (const selector of config.contentContainers) {
-        const containers = document.querySelectorAll(selector);
-        containers.forEach((container: any) => {
-          // 检查容器是否应该被排除
-          if (!shouldExcludeElement(container)) {
-            const content = container.innerText || container.textContent || "";
-            if (content.length > longestContent.length) {
-              longestContent = content;
-            }
+      // 尝试所有选择器，选择内容最长的
+      for (const selector of contentSelectors) {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((element) => {
+          const content = (element as HTMLElement).innerText || (element as HTMLElement).textContent || "";
+          if (content.length > allContent.length) {
+            allContent = content;
+            console.log(`从 ${selector} 提取到内容，长度: ${content.length}`);
           }
         });
       }
 
-      containerContent = longestContent;
-
-      // 如果没有找到合适的容器，尝试直接获取文章内容区域
-      if (!containerContent || containerContent.length < 100) {
-        // 尝试找到飞书文档的主内容区域
-        const mainContent =
-          document.querySelector(".page-main-item.editor .doc-content") ||
-          document.querySelector(".doc-content") ||
-          document.querySelector(".editor-content") ||
-          document.querySelector(".page-content");
-
-        if (mainContent) {
-          containerContent =
-            (mainContent as HTMLElement).innerText ||
-            mainContent.textContent ||
-            "";
-        }
+      // 2. 尝试从飞书文档的JSON数据中提取内容
+      try {
+        const scripts = document.querySelectorAll('script');
+        scripts.forEach((script) => {
+          const content = script.textContent || '';
+          if (content.includes('catalogRecordInfo') || content.includes('docInfo') || content.includes('pageBlock') || content.includes('docx') || content.includes('blockType')) {
+            console.log('找到飞书文档JSON数据');
+            // 尝试提取内容
+            try {
+              let start = 0;
+              let end = 0;
+              let braceCount = 0;
+              
+              for (let i = 0; i < content.length; i++) {
+                if (content[i] === '{') {
+                  if (braceCount === 0) {
+                    start = i;
+                  }
+                  braceCount++;
+                } else if (content[i] === '}') {
+                  braceCount--;
+                  if (braceCount === 0) {
+                    end = i + 1;
+                    const jsonStr = content.substring(start, end);
+                    try {
+                      const json = JSON.parse(jsonStr);
+                      if (json) {
+                        const extractTextFromJson = (obj: any): string => {
+                          let text = '';
+                          if (typeof obj === 'string') {
+                            if (!obj.match(/^[0-9a-zA-Z]{30,}$/)) {
+                              text += obj + ' ';
+                            }
+                          } else if (Array.isArray(obj)) {
+                            obj.forEach((item) => {
+                              text += extractTextFromJson(item);
+                            });
+                          } else if (typeof obj === 'object' && obj !== null) {
+                            for (const key in obj) {
+                              if (key === 'text' || key === 'content' || key === 'title' || key === 'value' || key === 'body') {
+                                text += extractTextFromJson(obj[key]);
+                              } else if (key === 'data' || key === 'children' || key === 'items') {
+                                text += extractTextFromJson(obj[key]);
+                              }
+                            }
+                          }
+                          return text;
+                        };
+                        
+                        const jsonContent = extractTextFromJson(json);
+                        if (jsonContent.length > allContent.length) {
+                          allContent = jsonContent;
+                          console.log('从JSON数据提取到内容，长度:', jsonContent.length);
+                        }
+                      }
+                    } catch (e) {
+                      // 忽略JSON解析错误
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              // 忽略错误
+            }
+          }
+        });
+      } catch (e) {
+        // 忽略错误
       }
 
-      // 如果没有找到内容容器或内容太短，使用整个页面内容
-      const bodyContent =
-        document.body.innerText || document.body.textContent || "";
-      const finalContent =
-        containerContent.length > bodyContent.length
-          ? containerContent
-          : bodyContent;
-
-      // 清理内容，保留合理的空白和换行，并移除状态标签
-      allContent = finalContent
-        .replace(/\s{3,}/g, "\n\n") // 多个空格替换为换行
-        .replace(/\n{3,}/g, "\n\n") // 多个换行替换为两个换行
-        .replace(/已识别/g, "") // 移除已识别标签
-        .replace(/标题/g, "") // 移除标题标签
-        .replace(/可展开/g, "") // 移除可展开标签
-        .trim(); // 去除首尾空白
-
-      // 进一步清理标题中的标记
-      allContent = allContent.replace(/已识别标题/g, "");
-
-      // 清理标题中的标记
-      allContent = allContent.replace(/已识别标题/g, "");
-
-      // 找到核心内容的开始位置
-      const mainContentStart = allContent.indexOf("MCP篇-MCP快速入门");
-      if (mainContentStart !== -1) {
-        // 只保留从核心内容开始的部分
-        allContent = allContent.substring(mainContentStart);
-      }
-
-      // 过滤掉特定的无关内容，但保留核心文章结构
-      allContent = allContent.replace(
-        /智泊AI大模型知识库[\s\S]*?MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-      allContent = allContent.replace(
-        /问问知识库[\s\S]*?MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-      allContent = allContent.replace(
-        /知识库目录[\s\S]*?MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-      allContent = allContent.replace(
-        /最新修改时间为05月29日[\s\S]*?MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-      allContent = allContent.replace(
-        /登录[\/\s]*注册[\s\S]*?MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-
-      // 过滤掉页脚内容
-      allContent = allContent.replace(/评论\(1\)[\s\S]*/, "");
-      allContent = allContent.replace(/用户2883[\s\S]*/, "");
-      allContent = allContent.replace(/大模型里面的mcp[\s\S]*/, "");
-      allContent = allContent.replace(/帮助中心[\s\S]*/, "");
-      allContent = allContent.replace(/效率指南[\s\S]*/, "");
-      allContent = allContent.replace(/滚动完成[\s\S]*/, "");
-      allContent = allContent.replace(/举报[\s\S]*/, "");
-      allContent = allContent.replace(/2025年5月29日修改[\s\S]*/, "");
-
-      // 清理多余的空行
-      allContent = allContent.replace(/\n{3,}/g, "\n\n");
-
-      // 确保内容不为空
-      if (!allContent || allContent.trim().length < 50) {
-        // 如果内容太少，使用原始内容但过滤掉明显无关的部分
-        const originalContent = finalContent
-          .replace(/\s{3,}/g, "\n\n")
-          .replace(/\n{3,}/g, "\n\n")
-          .replace(/已识别标题/g, "")
-          .trim();
-
-        // 只过滤掉明显无关的部分
-        allContent = originalContent
-          .replace(
-            /智泊AI大模型知识库[\s\S]*?MCP篇-MCP快速入门/,
-            "MCP篇-MCP快速入门"
-          )
-          .replace(/评论\(1\)[\s\S]*/, "")
-          .replace(/用户2883[\s\S]*/, "")
-          .replace(/帮助中心[\s\S]*/, "")
-          .replace(/效率指南[\s\S]*/, "")
-          .trim();
-      }
-
-      // 清理标题中的标记
-      allContent = allContent.replace(/已识别标题/g, "");
-
-      // 过滤掉重复的标题部分
-      allContent = allContent.replace(
-        /MCP篇-MCP快速入门[\s\S]*?MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-
-      // 清理多余的空行
-      allContent = allContent.replace(/\n{3,}/g, "\n\n");
-
-      // 移除中间的重复标题
-      allContent = allContent.replace(
-        /MCP篇-MCP快速入门\s*\n\s*MCP篇-MCP快速入门/,
-        "MCP篇-MCP快速入门"
-      );
-
-      // 移除末尾的重复标题和空行
-      const lines = allContent.split('\n');
-      const cleanedLines = [];
-      let foundMainContent = false;
+      // 3. 从页面标题中提取主标题
+      let mainTitle = title;
+      mainTitle = mainTitle.replace(/ - 飞书云文档$/, '');
       
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line === "MCP篇-MCP快速入门") {
-          foundMainContent = true;
-        }
-        if (foundMainContent) {
-          cleanedLines.push(lines[i]);
-        }
-      }
-      
-      allContent = cleanedLines.join('\n');
-      
-      // 移除末尾的重复标题
-      const contentLines = allContent.split('\n');
-      if (contentLines.length > 0) {
-        // 从后往前检查，找到第一个非空行
-        let lastNonEmptyLineIndex = contentLines.length - 1;
-        while (lastNonEmptyLineIndex >= 0 && contentLines[lastNonEmptyLineIndex].trim() === '') {
-          lastNonEmptyLineIndex--;
-        }
-        
-        // 检查最后一个非空行是否是重复的标题
-        if (lastNonEmptyLineIndex >= 0 && contentLines[lastNonEmptyLineIndex].trim() === "MCP篇-MCP快速入门") {
-          // 移除最后一个非空行及其后的空行
-          contentLines.splice(lastNonEmptyLineIndex);
-          allContent = contentLines.join('\n').trim();
-        }
-      }
-      
-      // 再次清理多余的空行
-      allContent = allContent.replace(/\n{3,}/g, "\n\n");
-      
-      // 确保内容不为空
-      allContent = allContent.trim();
-      
-      // 最终清理：移除末尾的重复标题（如果存在）
-      const finalLines = allContent.split('\n');
-      if (finalLines.length > 1) {
-        const lastLine = finalLines[finalLines.length - 1].trim();
-        if (lastLine === "MCP篇-MCP快速入门") {
-          finalLines.pop();
-          allContent = finalLines.join('\n').trim();
-        }
-      }
-      
-      // 确保内容不为空
-      if (!allContent || allContent.trim().length < 100) {
-        // 如果内容太少，使用原始内容
-        allContent = finalContent
-          .replace(/\s{3,}/g, "\n\n")
-          .replace(/\n{3,}/g, "\n\n")
-          .replace(/已识别标题/g, "")
-          .trim();
-      }
-
-      // 确保内容以核心标题开始
-      if (!allContent.trim().startsWith("MCP篇-MCP快速入门")) {
-        const mainContentStart = allContent.indexOf("MCP篇-MCP快速入门");
-        if (mainContentStart !== -1) {
-          allContent = allContent.substring(mainContentStart);
-        }
-      }
-
-      // 再次清理多余的空行
-      allContent = allContent.replace(/\n{3,}/g, "\n\n");
-
-      // 移除可能的特殊字符
-      allContent = allContent.replace(/​/g, "");
-
-      // 确保内容不为空
-      allContent = allContent.trim();
-
-      // 提取标题
-      const headingElements = document.querySelectorAll(
-        config.headingSelectors
-      );
+      // 4. 提取标题
+      const headingElements = document.querySelectorAll(config.headingSelectors);
       headings = Array.from(headingElements)
         .map((h) => h.textContent?.trim())
         .filter(Boolean)
         .filter((heading, index, self) => {
-          // 过滤掉太短的标题和重复的标题
           return heading.length > 2 && self.indexOf(heading) === index;
         });
 
-      // 检查是否有更多内容需要加载
-      const contentLength = allContent.length;
-      const elementCount = document.querySelectorAll("*").length;
+      // 5. 找到核心内容的开始位置
+      const mainTitleIndex = allContent.indexOf(mainTitle);
+      if (mainTitleIndex !== -1) {
+        allContent = allContent.substring(mainTitleIndex);
+      } else if (headings.length > 0) {
+        const firstHeading = headings[0];
+        const firstHeadingIndex = allContent.indexOf(firstHeading);
+        if (firstHeadingIndex !== -1) {
+          allContent = allContent.substring(firstHeadingIndex);
+        }
+      }
 
-      console.log(
-        `提取完成，内容长度: ${contentLength}, 标题数量: ${headings.length}`
-      );
+      // 6. 只过滤明显无关的内容
+      const unwantedPatterns = [
+        /评论\(\d+\)[\s\S]*/,
+        /帮助中心[\s\S]*/,
+        /效率指南[\s\S]*/
+      ];
+
+      // 应用过滤
+      unwantedPatterns.forEach(pattern => {
+        allContent = allContent.replace(pattern, "");
+      });
+
+      // 7. 清理内容
+      allContent = allContent
+        .replace(/\s{3,}/g, "\n\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+
+      // 8. 提取图片信息
+      const imgElements = document.querySelectorAll("img");
+      images = Array.from(imgElements)
+        .map((img: any) => {
+          const src = img.src || img.getAttribute('data-src') || '';
+          const alt = img.alt || '';
+          return { src, alt };
+        })
+        .filter(img => img.src && !img.src.includes('lark-reaction') && !img.src.startsWith('blob:'));
+
+      console.log(`提取的内容长度: ${allContent.length}`);
+      console.log(`提取的标题数量: ${headings.length}`);
+      console.log(`提取的图片数量: ${images.length}`);
 
       return {
         title,
         textContent: allContent,
         headings,
-        contentLength,
-        elementCount,
+        images,
+        contentLength: allContent.length,
+        elementCount: document.querySelectorAll("*").length,
       };
     }, crawlConfig);
+
+    // 打印提取的内容长度
+    console.log(`最终提取的内容长度: ${pageInfo.contentLength}`);
+    console.log(`最终提取的标题数量: ${pageInfo.headings.length}`);
+
+    // 如果内容为空或太短，尝试使用增量提取的内容
+    if ((pageInfo.contentLength === 0 || pageInfo.contentLength < 500) && this.extractedContent) {
+      console.log(`使用增量提取的内容，长度: ${this.extractedContent.length}`);
+      pageInfo.textContent = this.extractedContent;
+      pageInfo.contentLength = this.extractedContent.length;
+    }
+
+    // 再次检查内容长度，如果仍然太短，尝试直接获取页面的所有文本内容
+    if (pageInfo.contentLength < 500) {
+      console.log('内容长度仍然太短，尝试直接获取页面所有文本内容');
+      const fullContent = await page.evaluate(() => {
+        return document.body.innerText || document.body.textContent || "";
+      });
+      if (fullContent.length > pageInfo.contentLength) {
+        pageInfo.textContent = fullContent;
+        pageInfo.contentLength = fullContent.length;
+        console.log(`使用完整页面内容，长度: ${fullContent.length}`);
+      }
+    }
+
+    return pageInfo;
   }
 
   /**
@@ -415,7 +434,52 @@ export class ContentExtractor {
         };
 
         // 先找到最长的内容容器
-        for (const selector of config.contentContainers) {
+        const contentSelectors = [
+          // 飞书文档的主要内容容器
+          '.page-main-item.editor',
+          '.page-main-item.editor .doc-content',
+          '.page-main-item.editor .editor-container',
+          '.page-main-item.editor .lark-editor-content',
+          
+          // 飞书Wiki文档的内容容器
+          '.wiki-content',
+          '.lark-wiki-content',
+          '.feishu-wiki-content',
+          '.wiki-page-content',
+          
+          // 通用文档内容容器
+          '.doc-content',
+          '.editor-container',
+          '.lark-editor-content',
+          '.docs-doc-content',
+          '.docs-editor',
+          '.article-content',
+          '.content-area',
+          
+          // 块级内容
+          '.docx-page-block',
+          '.page-block',
+          '.zone-container',
+          '.block-content',
+          
+          // 页面级内容
+          '.page-content',
+          '.main-content',
+          '.document-content',
+          '.content-container',
+          
+          // 编辑器内容
+          '.editor-content',
+          '.rich-text-editor',
+          '.prose-content',
+          
+          // 标准HTML元素
+          'main',
+          'article',
+          'body'
+        ];
+        
+        for (const selector of contentSelectors) {
           const containers = document.querySelectorAll(selector);
           containers.forEach((container: any) => {
             // 检查容器是否应该被排除
@@ -465,47 +529,60 @@ export class ContentExtractor {
           .replace(/已识别标题/g, "") // 移除已识别标题标签
           .trim();
 
+        // 提取标题
+        const headingElements = document.querySelectorAll(
+          config.headingSelectors
+        );
+        const allHeadings = Array.from(headingElements)
+          .map((h) => h.textContent?.trim())
+          .filter(Boolean)
+          .filter((heading) => heading.length > 2);
+
         // 清理标题中的标记
         allContent = allContent.replace(/已识别标题/g, "");
 
+        // 找到文档的主标题作为核心内容的开始位置
+        let mainTitle = document.title || "未知标题";
+        // 尝试从标题中提取核心部分（去除后缀）
+        mainTitle = mainTitle.replace(/ - 飞书云文档$/, '');
+        
         // 找到核心内容的开始位置
-        const mainContentStart = allContent.indexOf("MCP篇-MCP快速入门");
+        let mainContentStart = allContent.indexOf(mainTitle);
+        
+        // 如果没有找到主标题，尝试使用第一个标题元素
+        if (mainContentStart === -1 && allHeadings.length > 0) {
+          mainTitle = allHeadings[0];
+          mainContentStart = allContent.indexOf(mainTitle);
+        }
+        
+        // 如果找到了核心内容开始位置，只保留从核心内容开始的部分
         if (mainContentStart !== -1) {
-          // 只保留从核心内容开始的部分
           allContent = allContent.substring(mainContentStart);
         }
 
         // 过滤掉特定的无关内容，但保留核心文章结构
-        allContent = allContent.replace(
-          /智泊AI大模型知识库[\s\S]*?MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-        allContent = allContent.replace(
-          /问问知识库[\s\S]*?MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-        allContent = allContent.replace(
-          /知识库目录[\s\S]*?MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-        allContent = allContent.replace(
-          /最新修改时间为05月29日[\s\S]*?MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-        allContent = allContent.replace(
-          /登录[\/\s]*注册[\s\S]*?MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-
-        // 过滤掉页脚内容
-        allContent = allContent.replace(/评论\(1\)[\s\S]*/, "");
-        allContent = allContent.replace(/用户2883[\s\S]*/, "");
-        allContent = allContent.replace(/大模型里面的mcp[\s\S]*/, "");
-        allContent = allContent.replace(/帮助中心[\s\S]*/, "");
-        allContent = allContent.replace(/效率指南[\s\S]*/, "");
-        allContent = allContent.replace(/滚动完成[\s\S]*/, "");
-        allContent = allContent.replace(/举报[\s\S]*/, "");
-        allContent = allContent.replace(/2025年5月29日修改[\s\S]*/, "");
+        const irrelevantPatterns = [
+          /智泊AI大模型知识库[\s\S]*?(?=\S{10,})/,
+          /问问知识库[\s\S]*?(?=\S{10,})/,
+          /知识库目录[\s\S]*?(?=\S{10,})/,
+          /最新修改时间为[0-9月日]+[\s\S]*?(?=\S{10,})/,
+          /登录[\/\s]*注册[\s\S]*?(?=\S{10,})/,
+          /评论\(\d+\)[\s\S]*/,
+          /用户\d+[\s\S]*/,
+          /帮助中心[\s\S]*/,
+          /效率指南[\s\S]*/,
+          /滚动完成[\s\S]*/,
+          /举报[\s\S]*/,
+          /[0-9年]+[0-9月]+[0-9日]+修改[\s\S]*/
+        ];
+        
+        // 只过滤明显的无关内容，避免过滤掉实际文章内容
+        irrelevantPatterns.forEach(pattern => {
+          // 只在内容长度足够时进行过滤，避免误删
+          if (allContent.length > 1000) {
+            allContent = allContent.replace(pattern, '');
+          }
+        });
 
         // 清理多余的空行
         allContent = allContent.replace(/\n{3,}/g, "\n\n");
@@ -520,79 +597,25 @@ export class ContentExtractor {
             .trim();
 
           // 只过滤掉明显无关的部分
-          allContent = originalContent
-            .replace(
-              /智泊AI大模型知识库[\s\S]*?MCP篇-MCP快速入门/,
-              "MCP篇-MCP快速入门"
-            )
-            .replace(/评论\(1\)[\s\S]*/, "")
-            .replace(/用户2883[\s\S]*/, "")
-            .replace(/帮助中心[\s\S]*/, "")
-            .replace(/效率指南[\s\S]*/, "")
-            .trim();
+          let filteredContent = originalContent;
+          irrelevantPatterns.forEach(pattern => {
+            filteredContent = filteredContent.replace(pattern, '');
+          });
+          allContent = filteredContent.trim();
         }
 
         // 清理标题中的标记
         allContent = allContent.replace(/已识别标题/g, "");
 
-        // 过滤掉重复的标题部分
-        allContent = allContent.replace(
-          /MCP篇-MCP快速入门[\s\S]*?MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-
         // 清理多余的空行
-        allContent = allContent.replace(/\n{3,}/g, "\n\n");
-
-        // 移除中间的重复标题
-        allContent = allContent.replace(
-          /MCP篇-MCP快速入门\s*\n\s*MCP篇-MCP快速入门/,
-          "MCP篇-MCP快速入门"
-        );
-
-        // 移除末尾的重复标题和空行
-        const lines = allContent.split('\n');
-        const cleanedLines = [];
-        let foundMainContent = false;
-        
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (line === "MCP篇-MCP快速入门") {
-            foundMainContent = true;
-          }
-          if (foundMainContent) {
-            cleanedLines.push(lines[i]);
-          }
-        }
-        
-        allContent = cleanedLines.join('\n');
-        
-        // 移除末尾的重复标题
-        const contentLines = allContent.split('\n');
-        if (contentLines.length > 0) {
-          // 从后往前检查，找到第一个非空行
-          let lastNonEmptyLineIndex = contentLines.length - 1;
-          while (lastNonEmptyLineIndex >= 0 && contentLines[lastNonEmptyLineIndex].trim() === '') {
-            lastNonEmptyLineIndex--;
-          }
-          
-          // 检查最后一个非空行是否是重复的标题
-          if (lastNonEmptyLineIndex >= 0 && contentLines[lastNonEmptyLineIndex].trim() === "MCP篇-MCP快速入门") {
-            // 移除最后一个非空行及其后的空行
-            contentLines.splice(lastNonEmptyLineIndex);
-            allContent = contentLines.join('\n').trim();
-          }
-        }
-        
-        // 再次清理多余的空行
         allContent = allContent.replace(/\n{3,}/g, "\n\n");
         
         // 确保内容不为空
         allContent = allContent.trim();
 
         // 确保内容以核心标题开始
-        if (!allContent.trim().startsWith("MCP篇-MCP快速入门")) {
-          const mainContentStart = allContent.indexOf("MCP篇-MCP快速入门");
+        if (mainTitle && !allContent.trim().startsWith(mainTitle)) {
+          const mainContentStart = allContent.indexOf(mainTitle);
           if (mainContentStart !== -1) {
             allContent = allContent.substring(mainContentStart);
           }
@@ -606,15 +629,6 @@ export class ContentExtractor {
 
         // 确保内容不为空
         allContent = allContent.trim();
-
-        // 提取标题
-        const headingElements = document.querySelectorAll(
-          config.headingSelectors
-        );
-        const allHeadings = Array.from(headingElements)
-          .map((h) => h.textContent?.trim())
-          .filter(Boolean)
-          .filter((heading) => heading.length > 2);
 
         // 计算新增内容
         const newContent =
