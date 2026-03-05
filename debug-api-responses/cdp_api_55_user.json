@@ -1,0 +1,7 @@
+{
+  "url": "https://internal-api-lark-api.feishu.cn/accounts/web/user?app_id=12&_t=1773021974729",
+  "data": {
+    "code": 4002,
+    "message": "unauthorized"
+  }
+}

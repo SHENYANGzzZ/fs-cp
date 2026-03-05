@@ -1,0 +1,19 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/box/file/cdn_url/",
+  "data": {
+    "data": [
+      {
+        "is_cover": true,
+        "index": 0,
+        "file_token": "IQKebuEPIoT1zlx0aXOc00umn7b",
+        "url": "https://lf26-drive.feishucdn.com/object/1000/box-file/Wwwz715nXKE",
+        "cipher_type": "1",
+        "secret": "jeniW/um1BcuDS5woJDqXelbfW7x6cAks2VwymQP0KI=",
+        "nonce": "zn9QIc8ATI2FGnmv",
+        "permitted": true
+      }
+    ],
+    "code": 0,
+    "message": "Success"
+  }
+}

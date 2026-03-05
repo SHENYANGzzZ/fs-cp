@@ -8,8 +8,9 @@
 - 从飞书文档URL获取完整的文章内容
 - 支持处理动态加载的内容
 - 支持展开折叠的内容
-- 将内容转换为Word格式
+- 将内容转换为Word格式和纯文本格式
 - 保存为本地文件并直接打印内容
+- 支持处理图片、超链接和代码块
 
 ### 1.2 技术栈
 - TypeScript：提供类型安全和更好的开发体验
@@ -175,260 +176,286 @@ feishu-shadow/
 10. **关闭浏览器**：清理浏览器资源
 11. **保存缓存**：将提取的内容保存到缓存
 12. **转换格式**：将内容转换为Word格式
-13. **保存输出**：保存为本地文件并打印内容
+13. **保存输出**：保存为本地文件
 
 ## 6. 关键技术点
 
-### 6.1 自适应滚动与回到顶部按钮检测
+### 6.1 API响应拦截
 
-根据内容加载情况动态调整滚动行为，并通过检测回到顶部按钮的可见性变化来判断内容是否完全加载：
+通过监听 Puppeteer 的 `page.on('response')` 事件，拦截飞书文档的API响应：
 
+- 过滤特定URL模式（如 `/space/api/box/stream/download/`）
+- 捕获JSON格式的文档数据
+- 保存API响应到本地文件用于调试
+- 从API响应中提取结构化的文档内容
+
+### 6.2 智能滚动算法
+
+实现自适应滚动机制，确保动态内容完全加载：
+
+- 最多执行30次滚动操作
+- 每次滚动后等待1秒让内容加载
+- 检测滚动高度稳定性（连续3次高度不变则停止）
+- 使用 `window.scrollTo()` 和 `window.scrollBy()` 组合滚动
+- 滚动到页面底部后再滚动回顶部，触发所有懒加载内容
+
+### 6.3 回到顶部按钮检测
+
+通过检测"回到顶部"按钮的可见性变化判断内容是否完全加载：
+
+实现了6种选择器策略：
 ```typescript
-async adaptiveScroll(): Promise<void> {
-  // 等待页面完全加载
-  await this.waitForPageLoad();
-  
-  // 初始化回到顶部按钮状态
-  await this.initBackToTopButtonState();
-  
-  // 滚动到页面顶部
-  await this.page.evaluate(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-  
-  let scrollCount = 0;
-  
-  // 循环滚动，直到检测到回到顶部按钮或达到最大滚动次数
-  while (scrollCount < maxScrolls) {
-    // 滚动到页面的下一个位置
-    const scrollPosition = 1000 * scrollCount;
-    await this.page.evaluate((position) => {
-      window.scrollTo({ top: position, behavior: 'smooth' });
-    }, scrollPosition);
-    
-    // 等待内容加载
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 展开折叠内容
-    await this.expandContent();
-    
-    // 检测回到顶部按钮是否出现
-    const backToTopVisible = await this.detectBackToTopButtonVisibilityChange();
-    if (backToTopVisible) {
-      console.log('检测到回到顶部按钮，停止滚动');
-      break;
-    }
-    
-    scrollCount++;
-  }
-  
-  // 滚动到页面底部，确保所有内容加载
-  await this.scrollToBottom();
-}
-
-// 初始化回到顶部按钮的初始状态
-async initBackToTopButtonState(): Promise<void> {
-  this.initialBackToTopButtonState = await this.hasBackToTopButton();
-  console.log(`回到顶部按钮初始状态: ${this.initialBackToTopButtonState}`);
-}
-
-// 检测回到顶部按钮是否存在
-async hasBackToTopButton(): Promise<boolean> {
-  if (!this.page) {
-    throw new Error("页面未初始化");
-  }
-  
-  try {
-    // 尝试多种选择器来检测回到顶部按钮
-    const selectors = [
-      '.back-to-top',
-      '.go-top',
-      '.to-top',
-      '[data-testid="back-to-top"]',
-      '[aria-label*="回到顶部"]',
-      '[aria-label*="back to top"]',
-      '.lark-back-to-top',
-      '.feishu-back-to-top',
-      '.wiki-back-to-top',
-      '.doc-back-to-top'
-    ];
-    
-    for (const selector of selectors) {
-      const elements = await this.page.$$(selector);
-      for (const element of elements) {
-        const isVisible = await this.page.evaluate(el => {
-          const style = window.getComputedStyle(el);
-          return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-        }, element);
-        
-        if (isVisible) {
-          console.log(`找到可见的回到顶部按钮: ${selector}`);
-          return true;
-        }
-      }
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('检测回到顶部按钮时出错:', error);
-    return false;
-  }
-}
-
-// 检测回到顶部按钮可见性变化
-async detectBackToTopButtonVisibilityChange(): Promise<boolean> {
-  if (!this.page) {
-    throw new Error("页面未初始化");
-  }
-  
-  console.log("检测回到顶部按钮可见性变化...");
-  const currentState = await this.hasBackToTopButton();
-  console.log(`回到顶部按钮当前状态: ${currentState}, 初始状态: ${this.initialBackToTopButtonState}`);
-  
-  // 检查是否从隐藏变为显示
-  return !this.initialBackToTopButtonState && currentState;
-}
+const backToTopSelectors = [
+  '[class*="back-to-top"]',
+  '[class*="backToTop"]',
+  '[class*="back_to_top"]',
+  '[id*="back-to-top"]',
+  '[aria-label*="回到顶部"]',
+  'button[title*="顶部"]'
+];
 ```
 
-### 6.2 缓存机制
+检测逻辑：
+- 检查按钮是否存在于DOM中
+- 验证按钮的可见性（display、visibility、opacity）
+- 检查按钮位置是否在视口内
+- 验证按钮是否包含向上箭头图标
 
-实现缓存机制，避免重复爬取相同的文档：
+### 6.4 三层内容提取策略
 
-```typescript
-async hasValidCache(url: string): Promise<boolean> {
-  try {
-    const cachePath = path.join(cacheDir, `${hashUrl(url)}.json`);
-    if (!fs.existsSync(cachePath)) {
-      return false;
-    }
-    
-    const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
-    const now = Date.now();
-    return now - cacheData.timestamp < cacheExpiry;
-  } catch (error) {
-    return false;
-  }
-}
+实现多层次的内容提取机制，确保获取完整内容：
 
-async setCache(url: string, content: string): Promise<void> {
-  try {
-    const cachePath = path.join(cacheDir, `${hashUrl(url)}.json`);
-    const cacheData = {
-      timestamp: Date.now(),
-      url,
-      content
-    };
-    fs.writeFileSync(cachePath, JSON.stringify(cacheData));
-  } catch (error) {
-    console.error('保存缓存失败:', error);
-  }
-}
-```
+**第一层：API响应提取**
+- 从拦截的API响应中解析JSON数据
+- 提取文档的结构化内容（标题、段落、列表等）
 
-### 6.3 并行处理
+**第二层：DOM选择器提取**
+- 使用23个不同的内容选择器尝试匹配
+- 从 `.page-main-item.editor` 到通用的 `body` 标签
+- 选择内容长度最长的结果
 
-支持并行爬取多个文档，提高爬取效率：
+**第三层：JSON数据解析**
+- 查找页面中的 `<script>` 标签
+- 解析其中的JSON数据
+- 提取 `__INITIAL_STATE__` 等全局变量
 
-```typescript
-async processMultipleUrls(urls: string[]): Promise<void> {
-  const maxParallel = parallelConfig.maxParallel;
-  const batches = [];
-  
-  // 将URL分成多个批次
-  for (let i = 0; i < urls.length; i += maxParallel) {
-    batches.push(urls.slice(i, i + maxParallel));
-  }
-  
-  // 按批次处理
-  for (const batch of batches) {
-    const promises = batch.map(url => crawlFeishuDoc(url));
-    await Promise.all(promises);
-  }
-}
-```
+### 6.5 内容过滤与清理
 
-### 6.4 浏览器管理
+实现复杂的内容过滤规则，去除噪音：
 
-优化浏览器启动和标签页管理，避免多余的空白标签页：
+- 过滤导航栏、侧边栏、页脚等非内容区域
+- 移除广告、推荐、评论等干扰元素
+- 清理空白字符和重复内容
+- 保留有意义的文本（长度 > 10字符）
 
-```typescript
-async launch(): Promise<void> {
-  // 启动浏览器
-  this.browser = await puppeteer.launch({
-    ...browserConfig,
-    defaultViewport: null,
-  });
-  
-  // 获取浏览器的所有页面
-  const pages = await this.browser.pages();
-  
-  // 关闭所有现有页面，只保留一个
-  for (let i = 1; i < pages.length; i++) {
-    await pages[i].close();
-  }
-  
-  // 使用第一个页面（如果有的话），否则创建新页面
-  if (pages.length > 0) {
-    this.page = pages[0];
-  } else {
-    this.page = await this.browser.newPage();
-  }
-  
-  // 设置浏览器参数
-  await this.setupBrowser();
-}
-```
+### 6.6 图片处理
+
+实现安全的图片下载机制：
+
+- 仅下载飞书域名（`feishu.cn`、`feishucdn.com`）的图片
+- 仅支持HTTPS协议的图片
+- 下载图片到本地并嵌入Word文档
+- 处理图片下载失败的情况（使用占位符）
+
+### 6.7 Word文档生成
+
+使用 `docx` 库生成高质量的Word文档：
+
+- 支持多级标题（H1-H6）
+- 支持段落、列表、代码块
+- 支持图片嵌入（自动调整大小）
+- 支持超链接（保留原始链接）
+- 自定义样式（字体、字号、行距等）
 
 ## 7. 遇到的问题及解决方案
 
-### 7.1 动态内容加载不全
-**问题**：飞书文档使用动态加载，初始页面只加载部分内容
-**解决方案**：实现自适应滚动机制，根据内容加载情况动态调整滚动行为，当页面高度连续多次不变时停止滚动
+### 7.1 飞书文档DOM结构复杂且多变
 
-### 7.2 折叠内容未展开
-**问题**：文档中存在折叠的内容区域，需要手动点击展开
-**解决方案**：识别折叠元素并自动点击展开，支持多种折叠元素选择器
+**问题描述**：
+飞书文档的DOM结构在不同类型的文档中差异很大，单一选择器无法覆盖所有情况。
 
-### 7.3 内容格式转换
-**问题**：提取的纯文本缺少格式信息
-**解决方案**：将文本内容转换为Markdown格式，保留基本结构
+**解决方案**：
+- 实现23个不同的内容选择器，按优先级尝试
+- 选择提取内容最长的结果
+- 结合API响应和DOM提取，互相补充
 
-### 7.4 浏览器兼容性
-**问题**：不同环境下的浏览器行为可能不同
-**解决方案**：设置统一的浏览器参数和用户代理
+### 7.2 动态内容加载时机不确定
 
-### 7.5 浏览器启动时多一个空标签页
-**问题**：Puppeteer启动浏览器时默认打开一个空白标签页
-**解决方案**：在浏览器启动后关闭所有多余的标签页，只保留一个
+**问题描述**：
+飞书文档使用懒加载技术，内容在滚动时才加载，但加载完成时机难以判断。
 
-### 7.6 重复爬取相同文档
-**问题**：每次运行都会重新爬取相同的文档，浪费时间和资源
-**解决方案**：实现缓存机制，避免重复爬取相同的文档
+**解决方案**：
+- 实现自适应滚动算法，检测滚动高度稳定性
+- 通过"回到顶部"按钮的可见性变化判断加载完成
+- 设置最大滚动次数（30次）防止无限循环
+- 每次滚动后等待1秒，给内容加载留出时间
 
-### 7.7 爬取速度慢
-**问题**：单线程爬取多个文档速度较慢
-**解决方案**：实现并行处理，支持同时爬取多个文档
+### 7.3 图片跨域和安全限制
 
-### 7.8 内容提取不完整
-**问题**：有时只能提取到文档的部分内容
-**解决方案**：尝试多种内容提取策略，包括从特定元素提取、从整个页面提取、从脚本标签中的JSON数据提取
+**问题描述**：
+部分图片存在跨域限制，无法直接下载；外部图片可能存在安全风险。
 
-### 7.9 回到顶部按钮检测
-**问题**：需要准确检测回到顶部按钮的出现，以判断内容是否完全加载
-**解决方案**：实现回到顶部按钮状态跟踪，检测其从隐藏到显示的变化，使用多种选择器确保检测准确性
+**解决方案**：
+- 仅下载飞书官方域名的图片
+- 仅支持HTTPS协议
+- 图片下载失败时使用占位符，不中断整体流程
+- 在Word文档中标注图片来源
+
+### 7.4 内容噪音过多
+
+**问题描述**：
+页面中包含大量导航、广告、推荐等非内容元素，影响提取质量。
+
+**解决方案**：
+- 实现详细的内容过滤规则（50+个过滤选择器）
+- 基于内容长度和文本密度判断有效内容
+- 移除特定的噪音元素（如"相关推荐"、"评论区"等）
+- 保留结构化内容（标题、段落、列表、代码块）
+
+### 7.5 折叠内容无法自动展开
+
+**问题描述**：
+飞书文档中的折叠内容默认不可见，需要用户点击才能展开。
+
+**解决方案**：
+- 识别折叠内容的触发元素（按钮、图标等）
+- 使用 `page.click()` 模拟点击操作
+- 等待内容展开后再进行提取
+- 处理多层嵌套的折叠内容
+
+### 7.6 缓存失效和更新问题
+
+**问题描述**：
+文档内容可能更新，但缓存仍然有效，导致获取到过期内容。
+
+**解决方案**：
+- 设置缓存过期时间（24小时）
+- 提供 `--no-cache` 选项强制重新爬取
+- 在缓存中记录爬取时间戳
+- 未来可考虑基于文档版本号的增量更新
 
 ## 8. 未来优化方向
 
-1. **内容结构优化**：进一步优化Word转换，保留更多原始格式信息，如表格、代码块等
-2. **多媒体处理**：支持提取和保存图片、视频等多媒体内容
-3. **错误重试**：增加错误重试机制，提高稳定性
-4. **配置化**：增加配置文件，支持更多自定义选项
-5. **性能优化**：进一步减少不必要的等待时间，提高爬取速度
-6. **UI界面**：添加简单的Web界面，方便用户操作
-7. **分布式爬取**：支持分布式爬取，提高大规模文档处理能力
-8. **智能识别**：智能识别文档结构，提高内容提取的准确性
-9. **API集成**：集成飞书开放API，获取更多文档信息
-10. **监控系统**：添加监控系统，实时跟踪爬取进度和状态
+### 8.1 代码重构
+
+**优先级：高**
+
+- **拆分大文件**：
+  - `browser-manager.ts`（867行）→ 拆分为 `scroll-handler.ts`、`button-detector.ts`、`content-expander.ts`
+  - `content-extractor.ts`（750行）→ 拆分为 `selectors.ts`、`content-cleaner.ts`、`json-parser.ts`
+
+- **降低复杂度**：
+  - 提取选择器配置到独立文件
+  - 简化内容过滤逻辑
+  - 减少嵌套层级
+
+- **提高可维护性**：
+  - 添加详细的代码注释
+  - 统一命名规范
+  - 提取魔法数字为常量
+
+### 8.2 命令行接口
+
+**优先级：高**
+
+- 支持命令行参数传入URL（当前是硬编码）
+- 支持 `--no-cache` 选项
+- 支持 `--output` 指定输出目录
+- 支持 `--format` 指定输出格式（word/markdown/html）
+- 支持 `--headless` 控制浏览器模式
+- 支持 `--timeout` 自定义超时时间
+
+### 8.3 功能扩展
+
+**优先级：中**
+
+- **Markdown输出支持**：
+  - 实现 `markdown-processor.ts`
+  - 支持标题、段落、列表、代码块转换
+  - 支持图片和链接转换
+
+- **批量爬取**：
+  - 支持从文件读取多个URL
+  - 支持并行爬取多个文档
+  - 支持进度显示和错误恢复
+
+- **增量更新**：
+  - 检测文档版本变化
+  - 仅更新变化的部分
+  - 保留历史版本
+
+- **更多输出格式**：
+  - PDF格式
+  - HTML格式（带样式）
+  - 纯文本格式
+
+### 8.4 性能优化
+
+**优先级：中**
+
+- **减少等待时间**：
+  - 优化滚动超时时间（当前15秒）
+  - 使用更智能的加载检测
+  - 减少不必要的等待
+
+- **并发优化**：
+  - 优化图片下载并发数
+  - 实现请求队列管理
+  - 避免资源竞争
+
+- **选择器优化**：
+  - 缓存选择器查询结果
+  - 优化选择器匹配效率
+  - 减少DOM查询次数
+
+### 8.5 测试覆盖
+
+**优先级：中**
+
+- **单元测试**：
+  - 为 `content-extractor` 添加测试
+  - 为 `word-processor` 添加测试
+  - 为 `cache-manager` 添加测试
+  - 为工具函数添加测试
+
+- **集成测试**：
+  - 测试完整的爬取流程
+  - 测试不同类型的飞书文档
+  - 测试错误处理和边界情况
+
+- **测试覆盖率**：
+  - 目标：80%以上的代码覆盖率
+  - 使用 Jest 或 Mocha 测试框架
+  - 集成到CI/CD流程
+
+### 8.6 错误处理增强
+
+**优先级：中**
+
+- **重试机制**：
+  - 网络请求失败自动重试
+  - 可配置重试次数和间隔
+  - 指数退避策略
+
+- **优雅降级**：
+  - 部分内容提取失败不影响整体
+  - 图片下载失败使用占位符
+  - 提供详细的错误信息
+
+- **日志系统**：
+  - 替换 `console.log` 为专业日志库
+  - 支持日志级别（debug/info/warn/error）
+  - 支持日志文件输出
+
+### 8.7 文档完善
+
+**优先级：低**
+
+- 添加API文档（JSDoc注释）
+- 添加使用示例和截图
+- 添加常见问题解答（FAQ）
+- 添加贡献指南
+- 添加更新日志（CHANGELOG.md）
 
 ## 9. 运行说明
 
@@ -439,21 +466,27 @@ npm install
 
 ### 9.2 运行命令
 ```bash
-npx ts-node src/index.ts <飞书文档URL> [--no-cache]
+npm start
 ```
 
-### 9.3 参数说明
-- `<飞书文档URL>`：飞书文档的完整URL
-- `--no-cache`：可选参数，不使用缓存，强制重新爬取
+### 9.3 配置说明
 
-### 9.4 示例
-```bash
-# 使用缓存（默认）
-npx ts-node src/index.ts https://jcny2we8lxya.feishu.cn/wiki/QBZ7wUMVwiR0NRkIGGbcTFd9nMg
+当前版本URL是硬编码在 `src/index.ts` 中的，需要修改代码来更换目标URL：
 
-# 不使用缓存，强制重新爬取
-npx ts-node src/index.ts https://jcny2we8lxya.feishu.cn/wiki/QBZ7wUMVwiR0NRkIGGbcTFd9nMg --no-cache
+```typescript
+// src/index.ts
+const url = 'https://jcny2we8lxya.feishu.cn/wiki/你的文档ID';
 ```
+
+**注意**：命令行参数支持将在未来版本中实现（参见第8.2节）。
+
+### 9.4 输出文件
+
+生成的文件保存在 `out/{文档标题}/` 目录下：
+- `{文档标题}.docx` - Word文档
+- `{文档标题}.html` - HTML预览文件
+
+缓存文件保存在 `cache/` 目录下，有效期为24小时。
 
 ## 10. 总结
 

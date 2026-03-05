@@ -1,0 +1,80 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/wiki/v2/space/get_info/?space_id=7508649135162851329",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "space_info": {
+        "7508649135162851329": {
+          "space_name": "智泊AI大模型知识库",
+          "description": "1. 知识库定位\n\n本知识库是由智泊AI企业搭建的AI技术资源中枢，专注于大语言模型（LLM）及相关技术领域，涵盖：Prompt、langchain、RAG、Agent、微调、部署以及大模型面试题库及典型问题解决方案，旨在为开发者、研究者及技术管理者提供一站式学习与参考平台。\n\n2. 核心内容\n\n技术专题：Transformer架构、微调方法（LoRA/P-Tuning）、推理优化（量化/剪枝）等核心技术解析。\n\n实战指南：模型部署、Prompt设计、数据清洗等场景的标准化操作流程。\n\n面试赋能：高频面试题解析（如RLHF原理、评估指标设计）及结构化回答策略。\n\n问题库：收录训练中的常见错误（如梯度消失/过拟合）及对应调优方案。\n\n3. 特色价值\n\n系统性：技术脉络从基础到进阶分层呈现，适配不同学习阶段需求。\n\n场景化：结合金融、医疗等行业案例，提供可复用的代码片段与架构设计模板。\n\n持续进化：每周同步AI顶会（NeurIPS/ICLR）最新成果，动态更新技术白皮书。\n\n访问建议：可通过关键词检索或按“技术模块-应用场景”二维目录快速定位资源。",
+          "space_icon": "https://lf-package-cn.feishucdn.com/obj/creation-image-system/241f6000d5bacbb0dcdbd~160x160.png",
+          "tenant_id": "7508649064266088476",
+          "is_star": false,
+          "space_cover": {
+            "origin": "https://s3-imfile.feishucdn.com/static-resource/v1/v2_1e1a2360-1391-458f-9739-9fbc02f743bg~?image_size=noop&cut_type=&quality=&format=image&sticker_format=.webp",
+            "thumbnail": "https://s3-imfile.feishucdn.com/static-resource/v1/v2_8edd93cc-5573-4706-8d5f-561ad13b357g~?image_size=noop&cut_type=&quality=&format=image&sticker_format=.webp",
+            "key": "boxcn4RjRgYGOTAaIf1WFT9H40d_false",
+            "is_graph_dark": false,
+            "color_value": "FFFFFF"
+          },
+          "user_space_perm": {
+            "view_wiki_collaborator": false,
+            "edit_wiki_collaborator": false,
+            "view_wiki_info": true,
+            "edit_wiki_info": false,
+            "edit_wiki_attribute": false,
+            "delete_wiki": false,
+            "star_wiki": false,
+            "view_wiki_general_info": false,
+            "modify_wiki_class": false,
+            "can_ai_knowledge": false
+          },
+          "space_perm_setting": {
+            "first_level_perm": 1,
+            "can_comment": true,
+            "can_other_perm": false,
+            "can_external_access": true,
+            "external_access_entity": 1,
+            "default_permissions": 1,
+            "new_default_permissions": 2,
+            "public_group_label": 24,
+            "view_general_info_entity": 1,
+            "node_operate_control": 2,
+            "ai_knowledge_entity": 1
+          },
+          "root_token": "L8v8wUA7qiZuPZkaDuLcod4wnnf",
+          "wiki_scope": 1,
+          "migrate_status": 2,
+          "url": "https://jcny2we8lxya.feishu.cn/wiki/space/7508649135162851329",
+          "space_type": 0,
+          "owner_perm_type": 1,
+          "open_sharing": 1,
+          "create_uid": "7508649110707896322",
+          "display_tag": {
+            "tag_type": 1,
+            "tag_value": "互联网公开"
+          },
+          "space_icon_info": {
+            "type": 3,
+            "key": ""
+          },
+          "ai_knowledge_release_entity": 0,
+          "ai_knowledge_payment_type": 0,
+          "ai_knowledge_recommended_questions_v2": {
+            "type": 2,
+            "vals": []
+          },
+          "home_page_v2": {
+            "wiki_token": "Qtb4w1HaaieIugkKSSkctezXnzd",
+            "obj_token": "T0Q9dZDvhoQmrhxQMrZcVR8tn7f",
+            "obj_type": 22,
+            "url": "https://jcny2we8lxya.feishu.cn/wiki/Qtb4w1HaaieIugkKSSkctezXnzd",
+            "title": "智泊AI大模型知识库"
+          }
+        }
+      },
+      "create_user": {}
+    }
+  }
+}

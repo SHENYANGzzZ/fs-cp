@@ -1,0 +1,54 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/comment/message_box/get_init_data/?obj_type=22&token=BUlfdzsFNoMwsgxyqJscDUQrntb&comment_type_list=2",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "comments": {},
+      "entities": {
+        "obj_meta": {},
+        "users": {
+          "7615081610689448909": {
+            "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/09c2f0c1-c364-4575-b826-3588a51b2e9e~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+            "cn_name": "访客 41468",
+            "description": "",
+            "description_flag": 0,
+            "display_name": {
+              "value": "访客 41468",
+              "i18n_value": {
+                "en_us": "Guest User 41468",
+                "ja_jp": "ゲストユーザー 41468",
+                "zh_cn": "访客 41468"
+              }
+            },
+            "email": "",
+            "en_name": "Guest User 41468",
+            "i18n_name": {
+              "en_us": "Guest User 41468",
+              "ja_jp": "ゲストユーザー 41468",
+              "zh_cn": "访客 41468"
+            },
+            "id": "7615081610689448909",
+            "is_anonymous": true,
+            "is_current_user": true,
+            "is_registered": true,
+            "mobile": "",
+            "name": "访客 41468",
+            "suid": "7615081610689448909",
+            "tenant_id": "7615081610718022615",
+            "tenant_name": "",
+            "uid": "",
+            "user_type": 2,
+            "work_status": {
+              "description_templates": {},
+              "end_time": 0,
+              "start_time": 0,
+              "status": null
+            }
+          }
+        }
+      },
+      "version": 0
+    }
+  }
+}

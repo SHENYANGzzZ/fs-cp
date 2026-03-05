@@ -1,0 +1,12 @@
+{
+  "url": "https://internal-api-security-tenant-probe.feishu.cn/lark/scs/compliance/ping_tenant_restriction",
+  "data": {
+    "msg": "",
+    "data": {
+      "should_kick_off": false,
+      "tenant_id": "7615074943352474843",
+      "is_anonymous": true
+    },
+    "code": 0
+  }
+}

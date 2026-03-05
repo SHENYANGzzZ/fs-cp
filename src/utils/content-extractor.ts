@@ -25,6 +25,8 @@ export interface PageInfo {
   textContent: string;
   headings: string[];
   images: ImageInfo[];
+  links: { href: string; text: string }[];
+  codeBlocks: { content: string; language: string }[];
   contentLength: number;
   elementCount: number;
 }
@@ -48,8 +50,9 @@ export class ContentExtractor {
    * 下载图片
    * @param imageUrl 图片URL
    * @param localPath 本地保存路径
+   * @param retries 重试次数
    */
-  private async downloadImage(imageUrl: string, localPath: string): Promise<boolean> {
+  private async downloadImage(imageUrl: string, localPath: string, retries: number = 3): Promise<boolean> {
     return new Promise((resolve) => {
       // 确保目录存在
       const dir = path.dirname(localPath);
@@ -57,23 +60,37 @@ export class ContentExtractor {
         fs.mkdirSync(dir, { recursive: true });
       }
 
-      // 下载图片
-      const file = fs.createWriteStream(localPath);
-      https.get(imageUrl, (response) => {
-        if (response.statusCode === 200) {
-          response.pipe(file);
-          file.on('finish', () => {
+      const attemptDownload = (attempt: number) => {
+        // 下载图片
+        const file = fs.createWriteStream(localPath);
+        https.get(imageUrl, (response) => {
+          if (response.statusCode === 200) {
+            response.pipe(file);
+            file.on('finish', () => {
+              file.close();
+              resolve(true);
+            });
+          } else {
             file.close();
-            resolve(true);
-          });
-        } else {
+            if (attempt < retries) {
+              console.log(`下载图片失败，重试 ${attempt + 1}/${retries}: ${imageUrl}`);
+              setTimeout(() => attemptDownload(attempt + 1), 1000);
+            } else {
+              resolve(false);
+            }
+          }
+        }).on('error', () => {
           file.close();
-          resolve(false);
-        }
-      }).on('error', () => {
-        file.close();
-        resolve(false);
-      });
+          if (attempt < retries) {
+            console.log(`下载图片出错，重试 ${attempt + 1}/${retries}: ${imageUrl}`);
+            setTimeout(() => attemptDownload(attempt + 1), 1000);
+          } else {
+            resolve(false);
+          }
+        });
+      };
+
+      attemptDownload(0);
     });
   }
 
@@ -87,25 +104,42 @@ export class ContentExtractor {
 
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
-      const imageName = `image_${Date.now()}_${i}.${img.src.split('.').pop()?.split('?')[0] || 'jpg'}`;
-      const localPath = path.join(imagesDir, imageName);
-      const relativePath = `images/${imageName}`;
-
-      console.log(`下载图片: ${img.src}`);
-      const success = await this.downloadImage(img.src, localPath);
+      let imageUrl = img.src;
       
-      if (success) {
-        processedImages.push({
-          src: img.src,
-          alt: img.alt,
-          localPath: relativePath
-        });
-        console.log(`图片下载成功: ${relativePath}`);
-      } else {
-        console.log(`图片下载失败: ${img.src}`);
+      // 处理可能的图片URL格式
+      if (imageUrl) {
+        // 确保URL是完整的
+        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+          // 尝试添加协议
+          imageUrl = `https://${imageUrl}`;
+        }
+        
+        // 处理可能的相对路径
+        if (imageUrl.includes('feishu.cn') || imageUrl.includes('larksuite.com')) {
+          const imageName = `image_${Date.now()}_${i}.${imageUrl.split('.').pop()?.split('?')[0] || 'jpg'}`;
+          const localPath = path.join(imagesDir, imageName);
+          const relativePath = `images/${imageName}`;
+
+          console.log(`下载图片: ${imageUrl}`);
+          const success = await this.downloadImage(imageUrl, localPath);
+          
+          if (success) {
+            processedImages.push({
+              src: imageUrl,
+              alt: img.alt || '',
+              localPath: relativePath
+            });
+            console.log(`图片下载成功: ${relativePath}`);
+          } else {
+            console.log(`图片下载失败: ${imageUrl}`);
+          }
+        } else {
+          console.log(`跳过非飞书域名的图片: ${imageUrl}`);
+        }
       }
     }
 
+    console.log(`图片处理完成，成功下载 ${processedImages.length} 张图片`);
     return processedImages;
   }
 
@@ -133,6 +167,8 @@ export class ContentExtractor {
       let allContent = "";
       let headings: string[] = [];
       let images: any[] = [];
+      let links: any[] = [];
+      let codeBlocks: any[] = [];
 
       // 1. 尝试从飞书文档的主要内容容器获取内容
       const contentSelectors = [
@@ -296,15 +332,39 @@ export class ContentExtractor {
         })
         .filter(img => img.src && !img.src.includes('lark-reaction') && !img.src.startsWith('blob:'));
 
+      // 9. 提取超链接信息
+      const linkElements = document.querySelectorAll("a");
+      links = Array.from(linkElements)
+        .map((link: any) => {
+          const href = link.href || '';
+          const text = link.textContent?.trim() || '';
+          return { href, text };
+        })
+        .filter(link => link.href && link.text && link.text.length > 0);
+
+      // 10. 提取代码块信息
+      const codeElements = document.querySelectorAll("pre code, code");
+      codeBlocks = Array.from(codeElements)
+        .map((code: any) => {
+          const content = code.textContent || '';
+          const language = code.className || code.getAttribute('data-language') || '';
+          return { content, language };
+        })
+        .filter(code => code.content && code.content.length > 0);
+
       console.log(`提取的内容长度: ${allContent.length}`);
       console.log(`提取的标题数量: ${headings.length}`);
       console.log(`提取的图片数量: ${images.length}`);
+      console.log(`提取的超链接数量: ${links.length}`);
+      console.log(`提取的代码块数量: ${codeBlocks.length}`);
 
       return {
         title,
         textContent: allContent,
         headings,
         images,
+        links,
+        codeBlocks,
         contentLength: allContent.length,
         elementCount: document.querySelectorAll("*").length,
       };

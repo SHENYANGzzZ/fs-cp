@@ -295,11 +295,31 @@ export class BrowserManager {
     });
     
     let scrollCount = 0;
-    const maxScrolls = 20;
+    const maxScrolls = 30; // 增加最大滚动次数
     let isContentComplete = false;
+    let previousScrollHeight = 0;
+    let stableScrollCount = 0;
     
     // 循环滚动，直到内容完全加载或达到最大滚动次数
     while (scrollCount < maxScrolls) {
+      // 检查当前滚动高度
+      const currentScrollStatus = await this.getScrollStatus();
+      const currentScrollHeight = currentScrollStatus.scrollHeight;
+      
+      // 检查滚动高度是否稳定
+      if (currentScrollHeight === previousScrollHeight) {
+        stableScrollCount++;
+        if (stableScrollCount >= 3) {
+          console.log("滚动高度稳定，内容已完全加载，停止滚动");
+          isContentComplete = true;
+          break;
+        }
+      } else {
+        stableScrollCount = 0;
+      }
+      
+      previousScrollHeight = currentScrollHeight;
+      
       // 滚动到页面的下一个位置
       await this.page.evaluate((step) => {
         // 尝试滚动飞书文档的实际滚动容器
@@ -321,7 +341,8 @@ export class BrowserManager {
           }
           
           if (element && element.scrollTop !== undefined && element.scrollHeight > 0) {
-            const scrollPosition = (element.scrollHeight / 10) * (step % 10);
+            // 更细粒度的滚动，确保所有内容都能被加载
+            const scrollPosition = (element.scrollHeight / 15) * (step % 15);
             element.scrollTop = scrollPosition;
             break;
           }
@@ -329,10 +350,14 @@ export class BrowserManager {
       }, scrollCount);
       
       // 等待内容加载
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000)); // 增加等待时间
       
       // 展开折叠内容
-      await this.expandContent();
+      const expandedCount = await this.expandContent();
+      if (expandedCount > 0) {
+        // 如果展开了内容，再等待一段时间
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
       
       // 检测回到顶部按钮是否从隐藏变为显示
       const hasBackToTopButtonChanged = await this.detectBackToTopButtonVisibilityChange();
@@ -365,6 +390,12 @@ export class BrowserManager {
     // 再次滚动到页面底部，确保所有内容加载
     await this.scrollToBottom();
     
+    // 再次展开折叠内容，确保所有内容都已展开
+    await this.expandContent();
+    
+    // 等待最终内容加载
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
     // 最终检查回到顶部按钮
     const finalHasBackToTopButton = await this.hasBackToTopButton();
     console.log(`智能滚动完成，是否出现回到顶部按钮: ${finalHasBackToTopButton}`);
@@ -380,17 +411,54 @@ export class BrowserManager {
     }
 
     const expandedCount = await this.page.evaluate((selectors) => {
-      const expandableElements = document.querySelectorAll(selectors);
+      // 扩展的折叠元素选择器
+      const expandableSelectors = [
+        ...selectors,
+        'button:contains("展开")',
+        'span:contains("展开")',
+        '.expand-btn',
+        '.collapse-btn',
+        '.toggle-btn',
+        '.expand-icon',
+        '[data-action="expand"]',
+        '[class*="expand"]',
+        '[class*="toggle"]',
+        '[class*="collapse"]'
+      ];
+      
+      const expandableElements = new Set<HTMLElement>();
+      
+      // 收集所有可能的折叠元素
+      expandableSelectors.forEach(selector => {
+        try {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(element => {
+            expandableElements.add(element as HTMLElement);
+          });
+        } catch (e) {
+          // 忽略选择器错误
+        }
+      });
+      
       let clicked = 0;
 
       expandableElements.forEach((element: any) => {
         try {
-          // 检查元素是否可见且包含展开文本
-          if (
-            element.offsetParent !== null &&
-            (element.textContent?.includes("展开") ||
-              element.innerText?.includes("展开"))
-          ) {
+          // 检查元素是否可见
+          if (element.offsetParent !== null) {
+            // 检查元素是否包含展开相关文本或类
+            const hasExpandText = element.textContent?.includes("展开") || 
+                               element.innerText?.includes("展开") ||
+                               element.title?.includes("展开") ||
+                               element.getAttribute('aria-label')?.includes("展开");
+            
+            const hasExpandClass = element.classList.contains("expand") ||
+                                element.classList.contains("toggle") ||
+                                element.classList.contains("collapse") ||
+                                element.classList.contains("expand-btn") ||
+                                element.classList.contains("toggle-btn") ||
+                                element.classList.contains("collapse-btn");
+            
             // 检查元素是否与登录/注册相关
             const isLoginRelated =
               element.classList.contains("login") ||
@@ -406,8 +474,9 @@ export class BrowserManager {
               element.querySelector(".register") ||
               element.querySelector(".auth");
 
-            // 跳过登录/注册相关的元素
-            if (!isLoginRelated) {
+            // 只点击与展开相关且非登录相关的元素
+            if ((hasExpandText || hasExpandClass) && !isLoginRelated) {
+              // 尝试点击元素
               element.click();
               clicked++;
             }

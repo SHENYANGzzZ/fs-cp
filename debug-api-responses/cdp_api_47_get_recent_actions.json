@@ -1,0 +1,10 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/inline_ai/get_recent_actions?count=100&scenario=1",
+  "data": {
+    "msg": "Success",
+    "data": {
+      "records": []
+    },
+    "code": 0
+  }
+}

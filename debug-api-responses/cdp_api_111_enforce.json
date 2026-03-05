@@ -1,0 +1,86 @@
+{
+  "url": "https://internal-api-security.feishu.cn/lark/scs/guardian/enforce",
+  "data": {
+    "msg": "Success",
+    "data": {
+      "resultMap": {
+        "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_EXPORT\",\"entityType\":\"DOC\",\"fileBizDomain\":\"CCM\",\"operatorTenantId\":\"7615074943352474843\",\"operatorUid\":\"7615074943314824398\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_EXPORT\"}": {
+          "effect": "PERMIT",
+          "actions": [],
+          "appliedPolicySetResults": [
+            {
+              "policySetKey": "FILE_PROTECT",
+              "isEvaluated": false
+            },
+            {
+              "policySetKey": "POLICY_CENTER",
+              "isEvaluated": false
+            }
+          ],
+          "enforcementID": "08e7d8fb-0414-4c76-93a9-2fcf554115a5"
+        },
+        "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_CONTENT_PREVIEW\",\"entityType\":\"DOC\",\"fileBizDomain\":\"CCM\",\"operatorTenantId\":\"7615074943352474843\",\"operatorUid\":\"7615074943314824398\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_CONTENT_PREVIEW\"}": {
+          "actions": [],
+          "appliedPolicySetResults": [
+            {
+              "policySetKey": "FILE_PROTECT",
+              "isEvaluated": false
+            },
+            {
+              "policySetKey": "POLICY_CENTER",
+              "isEvaluated": false
+            }
+          ],
+          "enforcementID": "79841b15-ebae-4168-8d73-39c192e769bb",
+          "effect": "PERMIT"
+        },
+        "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_PRINT\",\"entityType\":\"FILE\",\"fileBizDomain\":\"CCM\",\"operatorTenantId\":\"7615074943352474843\",\"operatorUid\":\"7615074943314824398\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_PRINT\"}": {
+          "appliedPolicySetResults": [
+            {
+              "isEvaluated": false,
+              "policySetKey": "FILE_PROTECT"
+            },
+            {
+              "policySetKey": "POLICY_CENTER",
+              "isEvaluated": false
+            }
+          ],
+          "enforcementID": "b5d757f3-fb2b-4bdd-bcfa-40e499acff96",
+          "effect": "PERMIT",
+          "actions": []
+        },
+        "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_FILE_DOWNLOAD\",\"entityType\":\"FILE\",\"fileBizDomain\":\"CCM\",\"operatorTenantId\":\"7615074943352474843\",\"operatorUid\":\"7615074943314824398\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_FILE_DOWNLOAD\"}": {
+          "effect": "PERMIT",
+          "actions": [],
+          "appliedPolicySetResults": [
+            {
+              "policySetKey": "FILE_PROTECT",
+              "isEvaluated": false
+            },
+            {
+              "policySetKey": "POLICY_CENTER",
+              "isEvaluated": false
+            }
+          ],
+          "enforcementID": "05eec728-f86d-4b30-a5db-e0894b2102a0"
+        },
+        "{\"entity\":{\"entityDomain\":\"CCM\",\"entityOperate\":\"CCM_PRINT\",\"entityType\":\"DOC\",\"fileBizDomain\":\"CCM\",\"operatorTenantId\":\"7615074943352474843\",\"operatorUid\":\"7615074943314824398\",\"ownerTenantId\":\"7508649064266088476\",\"ownerUserId\":\"7508649992253833217\"},\"pointKey\":\"PointKey_CCM_PRINT\"}": {
+          "effect": "PERMIT",
+          "actions": [],
+          "appliedPolicySetResults": [
+            {
+              "policySetKey": "FILE_PROTECT",
+              "isEvaluated": false
+            },
+            {
+              "policySetKey": "POLICY_CENTER",
+              "isEvaluated": false
+            }
+          ],
+          "enforcementID": "bc72fd36-3554-4420-976d-c6036170f14f"
+        }
+      }
+    },
+    "code": 0
+  }
+}

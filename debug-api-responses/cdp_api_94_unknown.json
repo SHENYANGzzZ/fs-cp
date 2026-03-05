@@ -1,0 +1,23 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/wiki/v2/perm/space/?space_id=7508649135162851329&wiki_actions=can_manage_space&wiki_actions=can_edit_first_level&wiki_actions=can_copy_content&wiki_actions=can_clone&wiki_actions=can_print&wiki_actions=can_export",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "7508649135162851329": {
+        "can_manage_space": false,
+        "can_edit_first_level": false,
+        "can_copy_content": false,
+        "can_clone": false,
+        "can_print": false,
+        "can_export": false,
+        "can_create_space": false,
+        "admin_can_cross": true,
+        "is_wiki_member": false,
+        "admin_external_access_entity": 1,
+        "external_access_entity": 1,
+        "can_ai_knowledge": true
+      }
+    }
+  }
+}

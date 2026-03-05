@@ -1,0 +1,10 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/pandora_ws/ws_ticket/",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "ticket": "GhV22iDuxBlwHT1ZV84rMtaR9TCC/b4szXSH0gSALEnRbVuwCLbP3j+nFboQxTSz56ciqtSilO/9okqAnHdD4gz7tbQzVFETYlrK6IueQTz41ZvhK3vurTSRjzRJuUAcwuX2BNxF5vTCGxiSzEdsdw=="
+    }
+  }
+}

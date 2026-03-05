@@ -1,0 +1,12 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/msg_box/get_version",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "resource_type": "COMMON_USER_NOTICE",
+      "token": "COMMON_USER_NOTICE_7615077506487520220",
+      "version": 0
+    }
+  }
+}

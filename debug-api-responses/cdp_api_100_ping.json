@@ -1,0 +1,12 @@
+{
+  "url": "https://internal-api-security.feishu.cn/lark/scs/compliance/ping",
+  "data": {
+    "code": 99991641,
+    "msg": "To view this content, please log in",
+    "data": {},
+    "error": {
+      "Code": 4101,
+      "LogoutReason": 14
+    }
+  }
+}

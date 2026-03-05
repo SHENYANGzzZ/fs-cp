@@ -1,0 +1,19 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/inline_ai/get_summary_cache",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "msgbox_version": null,
+      "latest_version": null,
+      "usage_status": 0,
+      "token": null,
+      "quota": null,
+      "summary": null,
+      "summary_version": null,
+      "is_enable": false,
+      "period": 0,
+      "usage_type": 0
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/platform/common_setting/get?token=AMecdR8OwoEyioxvytCcqSMUnSd&obj_type=22&scene=width_mode&scene=catalogue_status",
+  "data": {
+    "data": {
+      "width_mode": "NONE",
+      "catalogue_status": "NONE"
+    },
+    "code": 0,
+    "msg": "Success"
+  }
+}

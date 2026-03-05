@@ -1,0 +1,32 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/inline_ai/inline_mode/control_info/?uid=7615074943314824398&tenant_id=7615074943352474843&scenario=1&obj_token=BUlfdzsFNoMwsgxyqJscDUQrntb&obj_type=22",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "geo_invalid": {
+        "obj_token": false,
+        "user_id": false
+      },
+      "obj_type_enable": {
+        "2": false,
+        "3": false,
+        "22": false,
+        "30": false
+      },
+      "is_enable": false,
+      "perm_position": {
+        "main_fg_enable": false,
+        "data_fg_enable": true,
+        "myai_admin_view_enable": false,
+        "llpp_ban": false,
+        "admin_view_enable": true
+      },
+      "chat_is_exist": false,
+      "slides_search_mode": null,
+      "ask_useable": true,
+      "ask_native_useable": false,
+      "shadow_id": "0"
+    }
+  }
+}

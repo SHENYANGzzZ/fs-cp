@@ -1,0 +1,29 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/box/file/cdn_url/",
+  "data": {
+    "code": 0,
+    "message": "Success",
+    "data": [
+      {
+        "cipher_type": "1",
+        "secret": "AGhIaRmnJDr2BtRwjHOCErSjBR8g6ZDALUCtfQdgqLw=",
+        "nonce": "H7oqvqnGWSEiAjyI",
+        "permitted": true,
+        "is_cover": true,
+        "index": 0,
+        "file_token": "MksPbd9rJowlcAxe1qpct9IKnUc",
+        "url": "https://lf3-drive.feishucdn.com/object/1000/box-file/StWUhKEYhd8"
+      },
+      {
+        "cipher_type": "1",
+        "secret": "/cV2BhmlPy6xrxVfmVFGHHv06CdsJqQY6BRKP3Fzbpk=",
+        "nonce": "CYqko9+2GYouuuic",
+        "permitted": true,
+        "is_cover": true,
+        "index": 1,
+        "file_token": "YfbrbCVjio7RdZxWI6Qc57IQnzh",
+        "url": "https://lf6-drive.feishucdn.com/object/1000/box-file/9_RySO3DyVU"
+      }
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/rce/member_list?member_id=49605671971544&token=BUlfdzsFNoMwsgxyqJscDUQrntb&obj_type=22&protocol_version=2",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "my_color_id": 31,
+      "count": 2,
+      "version": 1635853333702,
+      "members": [
+        {
+          "user_id": "7610308948294962397",
+          "member_id": "62339958959959",
+          "touch_time": 1773024286,
+          "color_id": 8,
+          "cursor_info": null,
+          "user_email": "",
+          "user_mobile": "",
+          "avatar_url": "",
+          "user_name": "",
+          "create_time": 1773019663
+        },
+        {
+          "user_id": "7615081610689448909",
+          "member_id": "49605671971544",
+          "touch_time": 1773024356,
+          "color_id": 31,
+          "cursor_info": null,
+          "user_email": "",
+          "user_mobile": "",
+          "avatar_url": "",
+          "user_name": "",
+          "create_time": 1773024356
+        }
+      ],
+      "entities": {
+        "users": {
+          "7610308948294962397": {
+            "cn_name": "用户4063",
+            "en_name": "user 4063",
+            "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/09c2f0c1-c364-4575-b826-3588a51b2e9e~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+            "user_email": "",
+            "user_mobile": "",
+            "is_anonymous": 1,
+            "user_type": 1,
+            "i18n_names": {
+              "en_us": "user 4063",
+              "ja_jp": "ユーザー 4063",
+              "zh_cn": "用户4063"
+            },
+            "is_desensitize": false,
+            "has_no_user_info": false,
+            "display_name": {
+              "value": "用户4063",
+              "i18n_value": {
+                "en_us": "user 4063",
+                "ja_jp": "ユーザー 4063",
+                "zh_cn": "用户4063"
+              }
+            },
+            "allow_show_collaboration_avatar": true
+          },
+          "7615081610689448909": {
+            "cn_name": "访客 41468",
+            "en_name": "Guest User 41468",
+            "avatar_url": "https://s3-imfile.feishucdn.com/static-resource/v1/09c2f0c1-c364-4575-b826-3588a51b2e9e~?image_size=72x72&cut_type=default-face&quality=&format=jpeg&sticker_format=.webp",
+            "user_email": "",
+            "user_mobile": "",
+            "is_anonymous": 2,
+            "user_type": 2,
+            "i18n_names": {
+              "en_us": "Guest User 41468",
+              "ja_jp": "ゲストユーザー 41468",
+              "zh_cn": "访客 41468"
+            },
+            "is_desensitize": false,
+            "has_no_user_info": false,
+            "display_name": {
+              "value": "访客 41468",
+              "i18n_value": {
+                "en_us": "Guest User 41468",
+                "ja_jp": "ゲストユーザー 41468",
+                "zh_cn": "访客 41468"
+              }
+            },
+            "allow_show_collaboration_avatar": true
+          }
+        }
+      },
+      "trigger_fetch_user_count": 20,
+      "return_user_count_limit": 30
+    }
+  }
+}

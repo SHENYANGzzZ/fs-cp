@@ -1,0 +1,19 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/room/watch?member_id=47545622508856",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "entities": [
+        {
+          "code": 0,
+          "msg": "Success",
+          "resource_type": "AIGC",
+          "token": "AIGC_7615071369843313611_47545622508856_22_BUlfdzsFNoMwsgxyqJscDUQrntb",
+          "type": "MESSAGE_BOX",
+          "version": 0
+        }
+      ]
+    }
+  }
+}

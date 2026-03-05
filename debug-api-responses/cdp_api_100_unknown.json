@@ -1,0 +1,67 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/suite/permission/document/actions/state/",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "is_owner": false,
+      "actions": {
+        "manage_single_page_meta": 2,
+        "invite_can_view": 2,
+        "modify_secret_level": 2,
+        "invite_single_page_can_view": 2,
+        "invite_full_access": 2,
+        "print": 2,
+        "share_partner_tenant": 2,
+        "preview": 1,
+        "edit": 2,
+        "perceive": 1,
+        "show_collaborator_info": 1,
+        "show_operation_record": 2,
+        "manage_single_page_collaborator": 2,
+        "export": 2,
+        "view": 1,
+        "visit_secret_level": 2,
+        "apply_embed": 1,
+        "duplicate": 2,
+        "invite_can_edit": 2,
+        "manage_meta": 2,
+        "comment": 2,
+        "copy": 1602,
+        "invite_single_page_full_access": 2,
+        "share_external": 2,
+        "manage_collaborator": 2,
+        "invite_single_page_can_edit": 2
+      },
+      "permission_status_code": 0,
+      "auth_reasons": {
+        "apply_embed": 150000,
+        "view": 150000,
+        "perceive": 150000,
+        "show_collaborator_info": 150000,
+        "preview": 150000
+      }
+    },
+    "meta": {
+      "owner": {
+        "user_type": null,
+        "email": null,
+        "suid": null,
+        "tenant_id": null,
+        "can_apply_perm": null,
+        "admin_can_cross": null,
+        "perm_type": null,
+        "name": null,
+        "tenant_name": null,
+        "en_name": null,
+        "tenant_tag": null,
+        "id": null,
+        "cn_name": null,
+        "is_single_product": null,
+        "display_name": null,
+        "mobile": null,
+        "avatar_url": null
+      }
+    }
+  }
+}

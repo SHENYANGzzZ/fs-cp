@@ -223,6 +223,8 @@ export async function crawlFeishuDoc(
           textContent: cleanedContent,
           headings: [],
           images: [],
+          links: [],
+          codeBlocks: [],
           contentLength: cleanedContent.length,
           elementCount: 0
         };
@@ -251,11 +253,17 @@ export async function crawlFeishuDoc(
           await cacheManager.setCache(url, JSON.stringify(pageInfo));
         }
         
+        // 检查文档质量
+        wordProcessor.checkDocumentQuality(pageInfo);
+
         // 生成Word文档
         const doc = wordProcessor.generateWord(pageInfo);
 
         // 保存Word文件
         await wordProcessor.saveWord(pageInfo, doc);
+
+        // 生成HTML预览
+        wordProcessor.generateHtmlPreview(pageInfo);
 
         // 打印内容信息
         console.log(`Word文档生成成功: ${pageInfo.title}`);
@@ -320,11 +328,17 @@ export async function crawlFeishuDoc(
       await cacheManager.setCache(url, JSON.stringify(pageInfo));
     }
 
+    // 检查文档质量
+    wordProcessor.checkDocumentQuality(pageInfo);
+
     // 生成Word文档
     const doc = wordProcessor.generateWord(pageInfo);
 
     // 保存Word文件
     await wordProcessor.saveWord(pageInfo, doc);
+
+    // 生成HTML预览
+    wordProcessor.generateHtmlPreview(pageInfo);
 
     // 打印内容信息
     console.log(`Word文档生成成功: ${pageInfo.title}`);

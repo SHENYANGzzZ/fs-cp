@@ -1,0 +1,13 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/wiki/v2/perm/space_admin/",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "can_create_space": false,
+      "can_create_public_space": false,
+      "can_update_space_scope": false,
+      "can_create_person_space": false
+    }
+  }
+}

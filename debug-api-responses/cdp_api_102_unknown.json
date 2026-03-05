@@ -1,0 +1,12 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/explorer/v2/entity/info/",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "BUlfdzsFNoMwsgxyqJscDUQrntb": {
+        "owner_type": 5
+      }
+    }
+  }
+}

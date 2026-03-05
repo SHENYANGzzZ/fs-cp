@@ -1,0 +1,16 @@
+{
+  "url": "https://internal-api-security.feishu.cn/lark/scs/compliance/intercept/ccm/policystatus?policyType=DLP&entityType=DOCX&token=BUlfdzsFNoMwsgxyqJscDUQrntb&owner_uid=7508649992253833217&tenant_id=7508649064266088476",
+  "data": {
+    "code": 0,
+    "msg": "",
+    "data": {
+      "policy": {
+        "setting": {
+          "DLPCheckTime": 900
+        },
+        "res": false,
+        "timeout": 600
+      }
+    }
+  }
+}

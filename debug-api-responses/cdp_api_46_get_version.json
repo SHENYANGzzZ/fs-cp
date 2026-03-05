@@ -1,0 +1,12 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/msg_box/get_version",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "resource_type": "AIGC",
+      "token": "AIGC_7615077506487520220_37995662824560_22_BUlfdzsFNoMwsgxyqJscDUQrntb",
+      "version": 0
+    }
+  }
+}

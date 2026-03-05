@@ -1,0 +1,10 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/wiki/v2/search/wiki_browse_report/",
+  "data": {
+    "code": 0,
+    "msg": "Success",
+    "data": {
+      "is_success": true
+    }
+  }
+}

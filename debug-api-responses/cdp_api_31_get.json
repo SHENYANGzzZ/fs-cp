@@ -1,0 +1,10 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/platform/common_setting/get?token=BUlfdzsFNoMwsgxyqJscDUQrntb&obj_type=22&scene=doc_ai_summary_hidden",
+  "data": {
+    "data": {
+      "doc_ai_summary_hidden": "visible"
+    },
+    "code": 0,
+    "msg": "Success"
+  }
+}

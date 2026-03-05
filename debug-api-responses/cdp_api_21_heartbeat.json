@@ -1,0 +1,56 @@
+{
+  "url": "https://jcny2we8lxya.feishu.cn/space/api/rce/heartbeat?member_id=37995662824560",
+  "data": {
+    "data": {
+      "channel_info": [
+        {
+          "type": "DOCX",
+          "resource_type": "structure",
+          "token": "BUlfdzsFNoMwsgxyqJscDUQrntb",
+          "modules": [
+            {
+              "name": "engine_channel",
+              "version": 30
+            },
+            {
+              "name": "obj_permission_channel",
+              "version": 3
+            },
+            {
+              "name": "member_channel",
+              "version": 1635853333697
+            }
+          ]
+        },
+        {
+          "type": "MESSAGE_BOX",
+          "resource_type": "COMMON_USER_NOTICE",
+          "token": "COMMON_USER_NOTICE_7615077506487520220",
+          "modules": [
+            {
+              "name": "engine_channel",
+              "version": 0
+            }
+          ]
+        },
+        {
+          "type": "MESSAGE_BOX",
+          "resource_type": "NOTICE_22",
+          "token": "NOTICE_22_BUlfdzsFNoMwsgxyqJscDUQrntb",
+          "modules": [
+            {
+              "name": "engine_channel",
+              "version": 3
+            }
+          ]
+        }
+      ],
+      "interval": 120,
+      "interval_http": 15,
+      "server_time": 1773023402162,
+      "interval_inactive": 300
+    },
+    "code": 0,
+    "msg": "Success"
+  }
+}
