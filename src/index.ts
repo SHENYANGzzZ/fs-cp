@@ -17,6 +17,12 @@ async function main() {
     return;
   }
 
+  // 显示版本信息
+  if (options.version) {
+    CliParser.printVersion();
+    return;
+  }
+
   // 验证参数
   const validation = CliParser.validate(options);
   if (!validation.valid) {

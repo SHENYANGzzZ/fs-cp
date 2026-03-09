@@ -64,10 +64,6 @@ export class WordProcessor {
                   font: '宋体',
                   color: '0000FF',
                   underline: { type: 'single' },
-                  link: {
-                    type: 'external',
-                    url: link.href,
-                  },
                 }),
               ],
             });
@@ -301,7 +297,7 @@ export class WordProcessor {
         }
         
         // 确定标题层级（简单处理：根据索引分配层级）
-        let headingLevel: HeadingLevel;
+        let headingLevel: typeof HeadingLevel[keyof typeof HeadingLevel];
         if (index === 0) {
           headingLevel = HeadingLevel.HEADING_2;
         } else if (index < 3) {

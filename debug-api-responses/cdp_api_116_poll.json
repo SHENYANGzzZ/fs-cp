@@ -1,6 +1,0 @@
-{
-  "url": "https://internal-api-lark-api.feishu.cn/logifier/retrieval/tasks/poll?query=lark_security_7615071369843313611&ts=1773022036&sign=f48b9f33b08efa8c8994094a145a4960401a41ec899cd3a2bd0d57efb98ff40a",
-  "data": {
-    "next_poll_s": 60
-  }
-}

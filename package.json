@@ -1,10 +1,11 @@
 {
   "name": "feishu-shadow",
   "version": "1.0.0",
-  "main": "src/index.js",
-  "type": "module",
+  "main": "dist/index.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node dist/index.js",
+    "build": "npx tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -22,5 +23,8 @@
     "cheerio": "^1.2.0",
     "docx": "^9.6.0",
     "puppeteer": "^24.38.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

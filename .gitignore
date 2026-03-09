@@ -4,6 +4,10 @@ node_modules/
 # 输出目录
 out/
 
+# 缓存目录
+cache/
+
+
 # 临时文件
 temp_files/
 
@@ -38,3 +42,7 @@ dist/
 # 测试文件
 coverage/
 .nyc_output/
+
+# API 响应调试文件
+debug-api-responses/
+

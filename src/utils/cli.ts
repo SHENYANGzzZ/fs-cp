@@ -11,6 +11,10 @@ export interface CliOptions {
   parallel?: number;
   retry?: number;
   help?: boolean;
+  version?: boolean;
+  format?: string;
+  headless?: boolean;
+  timeout?: number;
 }
 
 export class CliParser {
@@ -22,6 +26,9 @@ export class CliParser {
       cache: true,
       parallel: 3,
       retry: 3,
+      format: 'word',
+      headless: false,
+      timeout: 300000, // 默认5分钟
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -66,6 +73,22 @@ export class CliParser {
           // 支持多个URL，逗号分隔
           options.urls = args[++i].split(',').map(u => u.trim());
           break;
+
+        case '--version':
+          options.version = true;
+          break;
+
+        case '--format':
+          options.format = args[++i];
+          break;
+
+        case '--headless':
+          options.headless = true;
+          break;
+
+        case '--timeout':
+          options.timeout = parseInt(args[++i], 10);
+          break;
       }
     }
 
@@ -91,6 +114,10 @@ export class CliParser {
   --no-cache              禁用缓存
   -p, --parallel <num>    并行处理数量（默认: 3）
   -r, --retry <num>       失败重试次数（默认: 3）
+  --version               显示版本信息
+  --format <format>       输出格式（word/markdown/html，默认: word）
+  --headless              使用无头浏览器模式
+  --timeout <ms>          超时时间（毫秒，默认: 300000）
 
 示例:
   # 爬取单个文档
@@ -104,7 +131,18 @@ export class CliParser {
 
   # 禁用缓存并设置并行数
   npm start -- -s "https://xxx.feishu.cn/wiki/space/xxxxx" --no-cache -p 5
+
+  # 使用无头浏览器并指定输出格式为markdown
+  npm start -- -u "https://xxx.feishu.cn/wiki/xxxxx" --headless --format markdown
 `);
+  }
+
+  /**
+   * 打印版本信息
+   */
+  static printVersion(): void {
+    const packageJson = require('../../package.json');
+    console.log(`飞书文档爬虫 - Feishu Shadow v${packageJson.version}`);
   }
 
   /**
