@@ -18,6 +18,89 @@ export class FeishuCrawler {
   }
 
   /**
+   * 从知识库空间提取所有文档链接
+   * @param {string} spaceUrl 知识库空间URL
+   * @returns {Promise<Array>} 文档链接列表
+   */
+  async extractSpaceDocuments(spaceUrl) {
+    const documents = [];
+
+    try {
+      console.log('正在提取知识库空间的文档链接...');
+
+      // 初始化浏览器
+      await this.browserManager.init();
+
+      // 导航到空间URL
+      await this.browserManager.navigate(spaceUrl);
+
+      // 等待页面加载
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      // 滚动加载更多内容
+      await this.browserManager.smartScroll();
+
+      // 提取所有文档链接
+      const page = this.browserManager.getPage();
+      const links = await page.evaluate(() => {
+        const results = [];
+        const allLinks = document.querySelectorAll('a[href*="wiki"], a[href*="doc"], a[href*="docx"]');
+
+        allLinks.forEach(link => {
+          const href = link.href;
+          const title = link.textContent?.trim() || '';
+
+          // 过滤掉无效链接和空间链接本身
+          if (href && title && title.length > 0 && title.length < 200 && !href.includes('/space/')) {
+            results.push({ title, url: href });
+          }
+        });
+
+        return results;
+      });
+
+      // 去重
+      const uniqueUrls = new Set();
+      for (const link of links) {
+        if (!uniqueUrls.has(link.url)) {
+          uniqueUrls.add(link.url);
+          documents.push({
+            title: link.title,
+            url: link.url,
+            type: this.getDocType(link.url)
+          });
+        }
+      }
+
+      console.log(`找到 ${documents.length} 个文档链接`);
+
+      // 关闭浏览器
+      await this.browserManager.close();
+
+    } catch (error) {
+      console.error('提取文档链接失败:', error);
+      try {
+        await this.browserManager.close();
+      } catch (e) {}
+      throw error;
+    }
+
+    return documents;
+  }
+
+  /**
+   * 获取文档类型
+   * @param {string} url 文档URL
+   * @returns {string} 文档类型
+   */
+  getDocType(url) {
+    if (url.includes('/wiki/')) return 'wiki';
+    if (url.includes('/doc/')) return 'doc';
+    if (url.includes('/docx/')) return 'docx';
+    return 'unknown';
+  }
+
+  /**
    * 爬取飞书文档
    * @param {string} url 飞书文档URL
    * @returns {Promise<Object>} 爬取结果
