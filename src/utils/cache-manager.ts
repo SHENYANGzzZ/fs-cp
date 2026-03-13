@@ -1,21 +1,20 @@
 /**
  * 缓存管理模块
- * 用于避免重复爬取相同的文档
+ * 负责处理内容缓存以避免重复爬取
  */
 
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-import { crawlConfig } from '../config';
+import fs from "fs";
+import path from "path";
+import { crawlConfig } from "../config";
 
 /**
  * 缓存项接口
  */
-export interface CacheItem {
+interface CacheItem {
   url: string;
   content: string;
+  title: string;
   timestamp: number;
-  etag?: string;
 }
 
 /**
@@ -25,53 +24,55 @@ export class CacheManager {
   private cacheDir: string;
   private cacheExpiry: number;
 
+  /**
+   * 构造函数
+   */
   constructor() {
     this.cacheDir = crawlConfig.cacheConfig.cacheDir;
     this.cacheExpiry = crawlConfig.cacheConfig.cacheExpiry;
-    
-    // 创建缓存目录
-    this.createCacheDir();
-  }
 
-  /**
-   * 创建缓存目录
-   */
-  private createCacheDir(): void {
+    // 确保缓存目录存在
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir, { recursive: true });
     }
   }
 
   /**
-   * 生成缓存键
-   * @param url 文档URL
+   * 生成缓存文件名
+   * @param url URL
    */
-  private generateCacheKey(url: string): string {
-    return crypto.createHash('md5').update(url).digest('hex');
+  private generateCacheFilename(url: string): string {
+    const hash = this.hashUrl(url);
+    return path.join(this.cacheDir, `${hash}.json`);
   }
 
   /**
-   * 获取缓存文件路径
-   * @param url 文档URL
+   * 对URL进行哈希处理
+   * @param url URL
    */
-  private getCachePath(url: string): string {
-    const key = this.generateCacheKey(url);
-    return path.join(this.cacheDir, `${key}.json`);
+  private hashUrl(url: string): string {
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+      const char = url.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(16);
   }
 
   /**
-   * 检查缓存是否存在且有效
-   * @param url 文档URL
+   * 检查缓存是否有效
+   * @param url URL
    */
   async hasValidCache(url: string): Promise<boolean> {
-    const cachePath = this.getCachePath(url);
+    const cacheFile = this.generateCacheFilename(url);
     
-    if (!fs.existsSync(cachePath)) {
+    if (!fs.existsSync(cacheFile)) {
       return false;
     }
-    
+
     try {
-      const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+      const cacheData = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
       const now = Date.now();
       
       // 检查缓存是否过期
@@ -81,24 +82,23 @@ export class CacheManager {
       
       return true;
     } catch (error) {
-      // 缓存文件损坏，视为无效
       return false;
     }
   }
 
   /**
    * 获取缓存内容
-   * @param url 文档URL
+   * @param url URL
    */
-  async getCache(url: string): Promise<CacheItem | null> {
-    const cachePath = this.getCachePath(url);
+  async getCache(url: string): Promise<any | null> {
+    const cacheFile = this.generateCacheFilename(url);
     
-    if (!fs.existsSync(cachePath)) {
+    if (!fs.existsSync(cacheFile)) {
       return null;
     }
-    
+
     try {
-      const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+      const cacheData = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
       const now = Date.now();
       
       // 检查缓存是否过期
@@ -108,104 +108,93 @@ export class CacheManager {
       
       return cacheData;
     } catch (error) {
-      // 缓存文件损坏，返回null
       return null;
     }
   }
 
   /**
-   * 设置缓存
-   * @param url 文档URL
-   * @param content 文档内容
-   * @param etag ETag（可选）
+   * 设置缓存内容
+   * @param url URL
+   * @param content 内容
+   * @param title 标题
    */
-  async setCache(url: string, content: string, etag?: string): Promise<void> {
-    const cachePath = this.getCachePath(url);
-    const cacheItem: CacheItem = {
+  async setCache(url: string, content: string, title: string): Promise<void> {
+    const cacheFile = this.generateCacheFilename(url);
+    
+    const cacheData: CacheItem = {
       url,
       content,
+      title,
       timestamp: Date.now(),
-      etag
     };
-    
-    try {
-      fs.writeFileSync(cachePath, JSON.stringify(cacheItem, null, 2));
-      console.log(`缓存已保存: ${url}`);
-    } catch (error) {
-      console.error('保存缓存失败:', error);
-    }
-  }
 
-  /**
-   * 删除缓存
-   * @param url 文档URL
-   */
-  async deleteCache(url: string): Promise<void> {
-    const cachePath = this.getCachePath(url);
-    
-    if (fs.existsSync(cachePath)) {
-      try {
-        fs.unlinkSync(cachePath);
-        console.log(`缓存已删除: ${url}`);
-      } catch (error) {
-        console.error('删除缓存失败:', error);
-      }
-    }
+    fs.writeFileSync(cacheFile, JSON.stringify(cacheData, null, 2));
   }
 
   /**
    * 清理过期缓存
    */
   async cleanExpiredCache(): Promise<void> {
-    try {
-      const files = fs.readdirSync(this.cacheDir);
-      const now = Date.now();
-      
-      files.forEach(file => {
-        const filePath = path.join(this.cacheDir, file);
-        try {
-          const cacheData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-          if (now - cacheData.timestamp > this.cacheExpiry) {
-            fs.unlinkSync(filePath);
-            console.log(`清理过期缓存: ${file}`);
-          }
-        } catch (error) {
-          // 文件损坏，删除
-          fs.unlinkSync(filePath);
-        }
-      });
-    } catch (error) {
-      console.error('清理过期缓存失败:', error);
+    console.log("开始清理过期缓存...");
+    
+    if (!fs.existsSync(this.cacheDir)) {
+      console.log("缓存目录不存在，无需清理");
+      return;
     }
+
+    const files = fs.readdirSync(this.cacheDir);
+    const now = Date.now();
+    let deletedCount = 0;
+
+    for (const file of files) {
+      const filePath = path.join(this.cacheDir, file);
+      
+      try {
+        const cacheData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        
+        if (now - cacheData.timestamp > this.cacheExpiry) {
+          fs.unlinkSync(filePath);
+          deletedCount++;
+        }
+      } catch (error) {
+        // 忽略无效的缓存文件
+        fs.unlinkSync(filePath);
+        deletedCount++;
+      }
+    }
+
+    console.log(`过期缓存清理完成，删除了 ${deletedCount} 个文件`);
   }
 
   /**
    * 获取缓存统计信息
    */
   async getCacheStats(): Promise<{ total: number; expired: number }> {
-    try {
-      const files = fs.readdirSync(this.cacheDir);
-      const now = Date.now();
-      let total = 0;
-      let expired = 0;
-      
-      files.forEach(file => {
-        const filePath = path.join(this.cacheDir, file);
-        try {
-          const cacheData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-          total++;
-          if (now - cacheData.timestamp > this.cacheExpiry) {
-            expired++;
-          }
-        } catch (error) {
-          // 文件损坏，不计入统计
-        }
-      });
-      
-      return { total, expired };
-    } catch (error) {
-      console.error('获取缓存统计失败:', error);
+    if (!fs.existsSync(this.cacheDir)) {
       return { total: 0, expired: 0 };
     }
+
+    const files = fs.readdirSync(this.cacheDir);
+    const now = Date.now();
+    let total = 0;
+    let expired = 0;
+
+    for (const file of files) {
+      const filePath = path.join(this.cacheDir, file);
+      
+      try {
+        const cacheData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        total++;
+        
+        if (now - cacheData.timestamp > this.cacheExpiry) {
+          expired++;
+        }
+      } catch (error) {
+        // 忽略无效的缓存文件
+        expired++;
+      }
+    }
+
+    return { total, expired };
   }
 }

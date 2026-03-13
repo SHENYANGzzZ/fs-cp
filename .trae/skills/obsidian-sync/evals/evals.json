@@ -1,0 +1,81 @@
+{
+    "skill_name": "obsidian-sync",
+    "evals": [
+        {
+            "id": 1,
+            "name": "sync_conversation",
+            "prompt": "保存这次对话到 Obsidian",
+            "expected_output": "生成对话记录 Markdown 文件，包含问题、回答、决策和行动项",
+            "assertions": [
+                {
+                    "type": "contains",
+                    "value": "对话记录"
+                },
+                {
+                    "type": "contains",
+                    "value": "问题/需求"
+                },
+                {
+                    "type": "file_created",
+                    "pattern": "*.md"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "sync_dev_log",
+            "prompt": "记录今天的开发日志到 Obsidian",
+            "expected_output": "生成开发日志 Markdown 文件，包含完成内容、代码变更、问题和计划",
+            "assertions": [
+                {
+                    "type": "contains",
+                    "value": "开发日志"
+                },
+                {
+                    "type": "contains",
+                    "value": "今日进展"
+                },
+                {
+                    "type": "file_created",
+                    "pattern": "*.md"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "name": "sync_tasks",
+            "prompt": "更新任务进度到 Obsidian",
+            "expected_output": "更新任务进度 Markdown 文件，包含进行中、已完成、待办任务",
+            "assertions": [
+                {
+                    "type": "contains",
+                    "value": "任务进度"
+                },
+                {
+                    "type": "contains",
+                    "value": "进行中"
+                },
+                {
+                    "type": "file_created",
+                    "pattern": "tasks.md"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "name": "auto_detect_project",
+            "prompt": "同步工作记录到 Obsidian",
+            "expected_output": "自动检测当前项目并同步所有工作记录",
+            "assertions": [
+                {
+                    "type": "contains",
+                    "value": "feishu-shadow"
+                },
+                {
+                    "type": "file_created",
+                    "pattern": "*.md"
+                }
+            ]
+        }
+    ]
+}

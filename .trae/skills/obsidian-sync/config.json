@@ -1,0 +1,32 @@
+{
+    "vault_path": "/Users/shenyang/Documents/Obsidian-Vault",
+    "project_name": "feishu-shadow",
+    "sync_settings": {
+        "auto_sync_on_complete": true,
+        "auto_sync_keywords": [
+            "完成",
+            "解决了",
+            "实现了",
+            "修复了",
+            "添加了"
+        ],
+        "important_content_keywords": [
+            "重要",
+            "关键",
+            "决策",
+            "里程碑"
+        ]
+    },
+    "output_settings": {
+        "conversation_dir": "conversations",
+        "dev_log_dir": "dev-logs",
+        "tasks_file": "tasks.md",
+        "date_format": "YYYY-MM-DD",
+        "time_format": "HH:mm"
+    },
+    "templates": {
+        "conversation": "templates/conversation.md",
+        "dev_log": "templates/dev-log.md",
+        "tasks": "templates/tasks.md"
+    }
+}

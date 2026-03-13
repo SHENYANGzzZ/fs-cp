@@ -53,6 +53,10 @@ export const crawlConfig = {
     ".docx-page-block",
     ".page-block",
     ".zone-container",
+    ".wiki-content",
+    ".lark-wiki-content",
+    ".feishu-wiki-content",
+    ".wiki-page-content",
   ],
   // 滚动配置
   scrollConfig: {

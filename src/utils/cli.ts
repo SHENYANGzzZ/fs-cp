@@ -1,179 +1,147 @@
 /**
- * 命令行参数处理模块
+ * 命令行解析模块
+ * 负责解析命令行参数
  */
 
+/**
+ * 命令行选项接口
+ */
 export interface CliOptions {
   url?: string;
   urls?: string[];
   space?: string;
-  output?: string;
-  cache?: boolean;
   parallel?: number;
   retry?: number;
+  cache?: boolean;
   help?: boolean;
   version?: boolean;
-  format?: string;
-  headless?: boolean;
-  timeout?: number;
+  pdf?: boolean;
+  pdfOutput?: string;
 }
 
+/**
+ * 命令行解析器类
+ */
 export class CliParser {
   /**
    * 解析命令行参数
+   * @param args 命令行参数
    */
   static parse(args: string[]): CliOptions {
-    const options: CliOptions = {
-      cache: true,
-      parallel: 3,
-      retry: 3,
-      format: 'word',
-      headless: false,
-      timeout: 300000, // 默认5分钟
-    };
-
+    const options: CliOptions = {};
+    
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
-
+      
       switch (arg) {
-        case '-h':
-        case '--help':
-          options.help = true;
+        case "--url":
+          if (i + 1 < args.length) {
+            options.url = args[i + 1];
+            i++;
+          }
           break;
-
-        case '-u':
-        case '--url':
-          options.url = args[++i];
+        case "--urls":
+          if (i + 1 < args.length) {
+            options.urls = args[i + 1].split(",");
+            i++;
+          }
           break;
-
-        case '-s':
-        case '--space':
-          options.space = args[++i];
+        case "--space":
+          if (i + 1 < args.length) {
+            options.space = args[i + 1];
+            i++;
+          }
           break;
-
-        case '-o':
-        case '--output':
-          options.output = args[++i];
+        case "--parallel":
+          if (i + 1 < args.length) {
+            options.parallel = parseInt(args[i + 1]);
+            i++;
+          }
           break;
-
-        case '--no-cache':
+        case "--retry":
+          if (i + 1 < args.length) {
+            options.retry = parseInt(args[i + 1]);
+            i++;
+          }
+          break;
+        case "--no-cache":
           options.cache = false;
           break;
-
-        case '-p':
-        case '--parallel':
-          options.parallel = parseInt(args[++i], 10);
+        case "--help":
+        case "-h":
+          options.help = true;
           break;
-
-        case '-r':
-        case '--retry':
-          options.retry = parseInt(args[++i], 10);
-          break;
-
-        case '--urls':
-          // 支持多个URL，逗号分隔
-          options.urls = args[++i].split(',').map(u => u.trim());
-          break;
-
-        case '--version':
+        case "--version":
+        case "-v":
           options.version = true;
           break;
-
-        case '--format':
-          options.format = args[++i];
+        case "--pdf":
+          options.pdf = true;
           break;
-
-        case '--headless':
-          options.headless = true;
-          break;
-
-        case '--timeout':
-          options.timeout = parseInt(args[++i], 10);
+        case "--pdf-output":
+          if (i + 1 < args.length) {
+            options.pdfOutput = args[i + 1];
+            i++;
+          }
           break;
       }
     }
-
+    
     return options;
+  }
+
+  /**
+   * 验证命令行选项
+   * @param options 命令行选项
+   */
+  static validate(options: CliOptions): { valid: boolean; error?: string } {
+    if (options.help || options.version) {
+      return { valid: true };
+    }
+    
+    if (!options.url && !options.urls && !options.space) {
+      return {
+        valid: false,
+        error: "必须指定 --url、--urls 或 --space 参数"
+      };
+    }
+    
+    return { valid: true };
   }
 
   /**
    * 打印帮助信息
    */
   static printHelp(): void {
-    console.log(`
-飞书文档爬虫 - Feishu Shadow
-
-用法:
-  npm start -- [选项]
-
-选项:
-  -h, --help              显示帮助信息
-  -u, --url <url>         爬取单个文档URL
-  -s, --space <url>       爬取整个知识库空间的所有文档
-  --urls <url1,url2>      爬取多个文档URL（逗号分隔）
-  -o, --output <dir>      输出目录（默认: ./out）
-  --no-cache              禁用缓存
-  -p, --parallel <num>    并行处理数量（默认: 3）
-  -r, --retry <num>       失败重试次数（默认: 3）
-  --version               显示版本信息
-  --format <format>       输出格式（word/markdown/html，默认: word）
-  --headless              使用无头浏览器模式
-  --timeout <ms>          超时时间（毫秒，默认: 300000）
-
-示例:
-  # 爬取单个文档
-  npm start -- -u "https://xxx.feishu.cn/wiki/xxxxx"
-
-  # 爬取整个知识库空间
-  npm start -- -s "https://xxx.feishu.cn/wiki/space/xxxxx"
-
-  # 爬取多个文档
-  npm start -- --urls "url1,url2,url3"
-
-  # 禁用缓存并设置并行数
-  npm start -- -s "https://xxx.feishu.cn/wiki/space/xxxxx" --no-cache -p 5
-
-  # 使用无头浏览器并指定输出格式为markdown
-  npm start -- -u "https://xxx.feishu.cn/wiki/xxxxx" --headless --format markdown
-`);
+    console.log("飞书文档爬虫 - Feishu Shadow");
+    console.log("用法:");
+    console.log("  node dist/index.js [选项]");
+    console.log("");
+    console.log("选项:");
+    console.log("  --url <url>          指定单个飞书文档URL");
+    console.log("  --urls <urls>        指定多个飞书文档URL，用逗号分隔");
+    console.log("  --space <url>        指定飞书知识库空间URL");
+    console.log("  --parallel <number>  指定并行处理数量 (默认: 3)");
+    console.log("  --retry <number>     指定重试次数 (默认: 3)");
+    console.log("  --no-cache           禁用缓存");
+    console.log("  --pdf                将网页转换为PDF文件");
+    console.log("  --pdf-output <path>  指定PDF输出路径 (默认: out/pdf/)");
+    console.log("  --help, -h           显示帮助信息");
+    console.log("  --version, -v        显示版本信息");
+    console.log("");
+    console.log("示例:");
+    console.log("  node dist/index.js --url https://example.feishu.cn/wiki/xxx");
+    console.log("  node dist/index.js --urls https://example.feishu.cn/wiki/xxx,https://example.feishu.cn/wiki/yyy");
+    console.log("  node dist/index.js --space https://example.feishu.cn/wiki/space/xxx");
+    console.log("  node dist/index.js --url https://example.com --pdf");
+    console.log("  node dist/index.js --url https://example.com --pdf --pdf-output ./output.pdf");
   }
 
   /**
    * 打印版本信息
    */
   static printVersion(): void {
-    const packageJson = require('../../package.json');
-    console.log(`飞书文档爬虫 - Feishu Shadow v${packageJson.version}`);
-  }
-
-  /**
-   * 验证选项
-   */
-  static validate(options: CliOptions): { valid: boolean; error?: string } {
-    if (options.help) {
-      return { valid: true };
-    }
-
-    if (!options.url && !options.space && !options.urls) {
-      return {
-        valid: false,
-        error: '必须指定 -u/--url、-s/--space 或 --urls 参数',
-      };
-    }
-
-    if (options.parallel && (options.parallel < 1 || options.parallel > 10)) {
-      return {
-        valid: false,
-        error: '并行数必须在 1-10 之间',
-      };
-    }
-
-    if (options.retry && (options.retry < 0 || options.retry > 10)) {
-      return {
-        valid: false,
-        error: '重试次数必须在 0-10 之间',
-      };
-    }
-
-    return { valid: true };
+    console.log("飞书文档爬虫 - Feishu Shadow");
+    console.log("版本: 1.0.0");
   }
 }

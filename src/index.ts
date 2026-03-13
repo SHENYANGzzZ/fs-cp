@@ -1,8 +1,35 @@
+/**
+ * 项目入口文件
+ * 负责解析命令行参数并执行爬取任务
+ */
+
 import { crawlFeishuDoc } from "./crawler";
 import { CliParser } from "./utils/cli";
-import { SpaceCrawler } from "./utils/space-crawler";
-import { RetryHandler } from "./utils/retry-handler";
-import { createAgent, TaskStatus } from "./agent";
+import { BrowserManager } from "./utils/browser-manager";
+import { convertWebPageToPDF } from "./pdf-converter";
+import * as path from "path";
+import * as fs from "fs";
+
+/**
+ * 生成PDF输出路径
+ */
+function generatePDFOutputPath(url: string, customPath?: string): string {
+  if (customPath) {
+    return customPath;
+  }
+
+  const urlObj = new URL(url);
+  const hostname = urlObj.hostname.replace(/\./g, "_");
+  const pathname = urlObj.pathname.replace(/\//g, "_").substring(0, 50);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").substring(0, 19);
+  
+  const outputDir = path.join(process.cwd(), "out", "pdf");
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  
+  return path.join(outputDir, `${hostname}${pathname}_${timestamp}.pdf`);
+}
 
 /**
  * 主函数
@@ -37,67 +64,49 @@ async function main() {
   console.log("=".repeat(60));
 
   try {
-    // 创建智能体
-    const agent = createAgent({
-      maxRetries: options.retry || 3,
-      parallelLimit: options.parallel || 3,
-      useCache: options.cache !== false,
-      verbose: true,
-    });
-
-    // 创建重试处理器
-    const retryHandler = new RetryHandler({
-      maxRetries: options.retry || 3,
-      delay: 2000,
-      backoff: true,
-    });
+    if (options.pdf && options.url) {
+      console.log("\n模式: 网页转PDF");
+      const outputPath = generatePDFOutputPath(options.url, options.pdfOutput);
+      
+      const browserManager = new BrowserManager();
+      
+      try {
+        console.log("启动浏览器...");
+        await browserManager.launch(true);
+        
+        console.log(`访问页面: ${options.url}`);
+        await browserManager.navigate(options.url);
+        await browserManager.waitForPageReady();
+        
+        const page = browserManager.getPage();
+        if (!page) {
+          throw new Error("页面初始化失败");
+        }
+        
+        const result = await convertWebPageToPDF(page, outputPath);
+        
+        console.log("\n=".repeat(60));
+        console.log("PDF转换完成");
+        console.log("=".repeat(60));
+        console.log(`输出文件: ${result.outputPath}`);
+        console.log(`截图数量: ${result.screenshotCount}`);
+        console.log(`耗时: ${(result.duration / 1000).toFixed(2)}秒`);
+        
+      } finally {
+        await browserManager.close();
+      }
+      return;
+    }
 
     let urlsToProcess: string[] = [];
 
-    // 处理知识库空间
-    if (options.space) {
-      console.log(`\n正在提取知识库空间的所有文档...`);
-      console.log(`空间URL: ${options.space}`);
-
-      const spaceCrawler = new SpaceCrawler();
-      const documents = await retryHandler.execute(
-        () => spaceCrawler.extractDocuments(options.space!),
-        "提取文档列表"
-      );
-
-      console.log(`\n找到 ${documents.length} 个文档`);
-      urlsToProcess = documents.map((doc) => doc.url);
-
-      // 保存文档列表
-      const fs = require("fs");
-      const path = require("path");
-      const listPath = path.join(process.cwd(), "out", "document-list.json");
-      const dir = path.dirname(listPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(listPath, JSON.stringify(documents, null, 2), "utf8");
-      console.log(`文档列表已保存到: ${listPath}`);
+    // 处理单个URL
+    if (options.url) {
+      urlsToProcess = [options.url];
     }
     // 处理多个URL
     else if (options.urls) {
       urlsToProcess = options.urls;
-    }
-    // 处理单个URL
-    else if (options.url) {
-      urlsToProcess = [options.url];
-    }
-
-    // 智能分析URL
-    if (urlsToProcess.length > 0) {
-      console.log(`\n智能分析URL...`);
-      for (const url of urlsToProcess) {
-        const analysis = await agent.analyzeUrl(url);
-        console.log(`- ${url}`);
-        console.log(`  有效: ${analysis.isValid}`);
-        console.log(`  飞书文档: ${analysis.isFeishuDoc}`);
-        console.log(`  缓存状态: ${analysis.cacheStatus}`);
-      }
     }
 
     if (urlsToProcess.length === 0) {
@@ -106,29 +115,25 @@ async function main() {
     }
 
     console.log(`\n开始处理 ${urlsToProcess.length} 个文档...`);
-    console.log(`并行数: ${options.parallel}`);
-    console.log(`使用缓存: ${options.cache}`);
-    console.log(`重试次数: ${options.retry}`);
+    console.log(`使用缓存: ${options.cache !== false}`);
+    console.log(`重试次数: ${options.retry || 3}`);
 
-    // 使用智能体批量处理文档
-    console.log(`\n使用智能体处理 ${urlsToProcess.length} 个文档...`);
-
-    // 添加任务到智能体
-    const taskIds = urlsToProcess.map((url) => agent.addTask(url));
-
-    // 执行任务
-    const results = await agent.executeTasks(taskIds);
-
-    // 转换结果格式
-    const processedResults = results.map((task) => ({
-      url: task.url,
-      success: task.status === TaskStatus.SUCCESS,
-      error: task.error,
-    }));
+    // 处理文档
+    const results = [];
+    for (const url of urlsToProcess) {
+      console.log(`\n处理文档: ${url}`);
+      try {
+        const outputPath = await crawlFeishuDoc(url, undefined, options.cache !== false);
+        results.push({ url, success: true, error: undefined, outputPath });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        results.push({ url, success: false, error: errorMsg, outputPath: undefined });
+      }
+    }
 
     // 统计结果
-    const successful = processedResults.filter((r) => r.success).length;
-    const failed = processedResults.filter((r) => !r.success).length;
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
     console.log("\n=".repeat(60));
     console.log("处理完成");
@@ -139,7 +144,7 @@ async function main() {
 
     if (failed > 0) {
       console.log("\n失败的文档:");
-      processedResults
+      results
         .filter((r) => !r.success)
         .forEach((r, index) => {
           console.log(`  ${index + 1}. ${r.url}`);
@@ -147,26 +152,15 @@ async function main() {
         });
     }
 
-    // 显示任务统计信息
-    const taskStats = agent.getTaskStats();
-    console.log("\n任务统计:");
-    console.log(`  总任务数: ${taskStats.total}`);
-    console.log(`  成功: ${taskStats.success}`);
-    console.log(`  失败: ${taskStats.failed}`);
-    console.log(`  待处理: ${taskStats.pending}`);
-    console.log(`  处理中: ${taskStats.running}`);
-
-    // 显示缓存统计信息
-    const cacheStats = await agent.getCacheStats();
-    console.log("\n缓存统计:");
-    console.log(`  缓存总数: ${cacheStats.total}`);
-    console.log(`  有效缓存: ${cacheStats.total - cacheStats.expired}`);
-    console.log(`  过期缓存: ${cacheStats.expired}`);
-
-    // 清理过期缓存
-    console.log("\n清理过期缓存...");
-    await agent.cleanExpiredCache();
-    console.log("过期缓存清理完成");
+    if (successful > 0) {
+      console.log("\n成功的文档:");
+      results
+        .filter((r) => r.success)
+        .forEach((r, index) => {
+          console.log(`  ${index + 1}. ${r.url}`);
+          console.log(`     输出路径: ${r.outputPath}`);
+        });
+    }
   } catch (error) {
     console.error("执行失败:", error);
     process.exit(1);
